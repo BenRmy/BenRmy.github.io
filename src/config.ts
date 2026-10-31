@@ -84,7 +84,7 @@ export const i18nConfig: I18nConfig = {
                     home: "记录技术与生活",
                     archive: "共 {count} 篇文章", // {count} will be replaced with the total number of articles
                     about: "写代码，也拆代码",
-                    friends: "合作与组织",
+                    friends: "逆向与正向",
                 }
             }
         },
@@ -100,7 +100,7 @@ export const i18nConfig: I18nConfig = {
                     home: "Notes on tech and life",
                     archive: "Total of {count} articles",
                     about: "Build it, then take it apart",
-                    friends: "Cooperation and Organization",
+                    friends: "Reverse and Forward",
                 }
             }
         }
