@@ -25,7 +25,8 @@ export default {
   summary: '新建一篇文章（默认路径按日期生成）',
   usage: 'pnpm momo new [路径] [--lang <zh-cn|en>] [--title <标题>] [--category <分类>] [--draft] [--force]',
   details: [
-    '创建 src/content/blog/<路径>/<语言>.md，并写入符合 schema 的 frontmatter。',
+    '目录形式：pnpm momo new notes/foo → src/content/blog/notes/foo/<语言>.md（文章可带自己的图片目录）',
+    '扁平形式：pnpm momo new foo.md   → src/content/blog/foo.md（单文件，不再为文件名单独建目录）',
     '路径省略时按日期生成，例如 2026/2026-09-10。',
   ].join('\n'),
   options: {
@@ -40,11 +41,20 @@ export default {
     const lang = flags.lang ?? 'zh-cn'
     if (!LANGS.includes(lang)) fail(`不支持的语言：${lang}（可选 ${LANGS.join(' / ')}）`)
 
-    let path = (positional[0] ?? '').trim().replace(/\\/g, '/').replace(/^\/+|\/+$/g, '')
+    const input = (positional[0] ?? '').trim().replace(/\\/g, '/').replace(/^\/+|\/+$/g, '')
+    // 以 .md 结尾 = 扁平单文件模式：文件名即文章 id，不再套一层目录
+    const isFlat = /\.md$/i.test(input)
+    let path = isFlat ? input.replace(/\.md$/i, '') : input
     if (!path) path = autoPath()
     if (path.split('/').some((part) => part === '..')) fail('路径不能包含 ..')
+    if (isFlat && lang !== LANGS[0]) {
+      fail(`扁平文件只有一份，无法区分语言（当前 --lang ${lang}）；多语言请用目录形式：pnpm momo new ${path}`)
+    }
 
-    const file = join(fromRoot('src/content/blog'), ...path.split('/'), `${lang}.md`)
+    const file = join(
+      fromRoot('src/content/blog'),
+      isFlat ? `${path}.md` : `${path}/${lang}.md`,
+    )
     if ((await pathExists(file)) && !flags.force) {
       fail(`文件已存在：${relPath(file)}（用 --force 覆盖）`)
     }

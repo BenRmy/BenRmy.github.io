@@ -18,8 +18,16 @@ async function req<T>(url: string, init?: RequestInit): Promise<T> {
   return data as T
 }
 
+/**
+ * 文章路径 -> URL 段。
+ * 点号必须编码成 %2E：CMS 跑在 Vite dev server 上，带扩展名的路径（如 foo.md）
+ * 会被 Vite 当静态资源拦下来返回 index.html，请求根本到不了 Hono。
+ */
 function encodePath(path: string) {
-  return path.split('/').map(encodeURIComponent).join('/')
+  return path
+    .split('/')
+    .map((seg) => encodeURIComponent(seg).replace(/\./g, '%2E'))
+    .join('/')
 }
 
 export const api = {

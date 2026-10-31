@@ -42,6 +42,20 @@ export function baseUrl(path: string) {
 }
 
 /**
+ * 文章目录内可用的图片。只取 key 做存在性判断，不真正加载模块。
+ * 扁平文章（`src/content/blog/foo.md`）没有自己的目录，写相对封面必然找不到文件，
+ * 这里直接返回空串，免得 <Image> 去 import 不存在的路径、控制台刷 ERROR。
+ */
+const contentImageKeys = new Set(
+	Object.keys(
+		import.meta.glob("/src/content/blog/**/*.{png,jpg,jpeg,webp,avif,gif}", {
+			eager: false,
+			caseSensitive: false,
+		})
+	)
+);
+
+/**
  * 将相对于content/blog目录的路径转换为相对于src目录的路径
  * @param contentPath 相对于content/blog目录的路径
  * @param blogName 博客文章的名称/ID，用于构建完整路径
@@ -50,21 +64,21 @@ export function baseUrl(path: string) {
 export function blogCoverUrl(contentPath: string, blogName: string): string {
 
     if (!contentPath) return '';
-    
-    if (contentPath.startsWith('http')) {
+
+    // 外链与 public 资源原样返回（public 路径由 <ImageModule> 补 BASE_URL）
+    if (/^[a-z][a-z0-9+.-]*:\/\//i.test(contentPath) || contentPath.startsWith('//')) {
+        return contentPath;
+    }
+    if (contentPath.startsWith('/')) {
         return contentPath;
     }
 
-    // 处理相对路径 ./ 开头的情况
-    if (contentPath.startsWith('./')) {
-        contentPath = contentPath.substring(2);
-    }
-    
-    // 移除可能的前导斜杠
-    const normalizedPath = contentPath.startsWith('/') ? contentPath.slice(1) : contentPath;
-    
-    // 构造相对于src目录的路径，包含博客名称文件夹
-    return joinUrl("content/blog/", blogName, normalizedPath)
+    // 相对路径：图片必须和 markdown 放在同一个文章目录里
+    const file = contentPath.replace(/^\.\//, '');
+    const key = `/src/content/blog/${blogName}/${file}`;
+    if (!contentImageKeys.has(key)) return '';
+
+    return joinUrl("content/blog/", blogName, file)
 }
 
 export function getRelativeLocaleUrl(lang: string, path: string) : string { 

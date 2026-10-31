@@ -143,7 +143,8 @@ function createProcessor(base, locale, ec, collage) {
     // /xxx.png 按 public 目录定位；插件才能读到宽高比（网络图片抓头部）
     .use(rehypeImageCollage, {
       ...collage,
-      baseDir: base ? join(BLOG_DIR, ...base.split('/')) : BLOG_DIR,
+      // 扁平文章（foo.md）没有自己的目录，把 baseDir 退回博客根，避免指向一个文件
+      baseDir: base && !base.endsWith('.md') ? join(BLOG_DIR, ...base.split('/')) : BLOG_DIR,
       publicDir: PUBLIC_DIR,
     })
     .use(rehypeComponents, {

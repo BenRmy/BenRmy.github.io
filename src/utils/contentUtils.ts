@@ -14,6 +14,33 @@ export type BlogEntryWithLocaleStatus = CollectionEntry<'blog'> & {
   isFallback?: boolean;
 };
 
+/** 站点支持的语言代码（`i18n.locales` 可能是字符串或 { path } 对象） */
+const supportedLocales = (i18n?.locales ?? i18nConfig.supportedLanguages).map((l) =>
+  typeof l === 'string' ? l : l.path
+)
+
+/**
+ * 把 content collection 的原始 id（相对 `src/content/blog`、带 `.md` 后缀）拆成
+ * 「逻辑文章 id + 语言」。三种合法写法：
+ *
+ *   hello/zh-cn.md  -> { id: 'hello',      language: 'zh-cn' }   // 目录形式，最后一段是语言
+ *   flat-note.md    -> { id: 'flat-note',  language: 默认语言 }   // 扁平形式，文件名即 id
+ *   2026/10-31.md   -> { id: '2026/10-31', language: 默认语言 }   // 目录 + 非语言文件名
+ *
+ * 旧实现把最后一段无条件当语言文件名，扁平文件因此算出空 id、语言变成文件名，
+ * 随后被语言分组整体丢弃（不报错、页面也不生成）。这里改为按「是否命中语言列表」判定。
+ */
+export function parseEntryId(rawId: string, defaultLanguage: string): { id: string; language: string } {
+  const withoutExt = rawId.replace(/\.md$/, '')
+  const parts = withoutExt.split('/')
+  const last = parts[parts.length - 1]
+
+  if (parts.length > 1 && supportedLocales.includes(last)) {
+    return { id: parts.slice(0, -1).join('/'), language: last }
+  }
+  return { id: withoutExt, language: defaultLanguage }
+}
+
 export async function getBlogEntrySort(
   lang?: string,
   filter?: (entry: CollectionEntry<'blog'>) => boolean | undefined,
@@ -34,10 +61,7 @@ export async function getBlogEntrySort(
   const defaultLanguage = i18n?.defaultLocale ?? i18nConfig.defaultLanguage;
 
   for (const post of blogEntries) {
-    const parts = post.id.split('/');
-    const fileName = parts[parts.length - 1];
-    const id = parts.slice(0, -1).join('/');
-    const language: string = fileName.replace('.md', '');
+    const { id, language } = parseEntryId(post.id, defaultLanguage);
 
     if (!grouped.has(id)) {
       grouped.set(id, {});

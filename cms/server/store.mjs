@@ -9,6 +9,19 @@ export const BLOG_DIR = fileURLToPath(new URL('../../src/content/blog/', import.
 
 export const LANGS = ['zh-cn', 'en']
 
+// 扁平文章（src/content/blog/foo.md）没有语言文件名，统一按默认语言处理
+const DEFAULT_LANG = LANGS[0]
+
+/** 文章标识 -> 某语言的实际文件路径（以 .md 结尾的标识本身就是文件） */
+function articleFile(rel, lang) {
+  return rel.endsWith('.md') ? blogPath(rel) : join(blogPath(rel), `${lang}.md`)
+}
+
+/** 两个 slug 是否指向同一篇文章（扁平文章带不带 .md 后缀都要认） */
+function sameSlug(a, b) {
+  return a === b || a === String(b).replace(/\.md$/, '')
+}
+
 // 并发读取上限：文章较多时，逐个 await 读取会明显拖慢一次扫描
 const READ_CONCURRENCY = 32
 
@@ -132,9 +145,13 @@ async function collectArticleFiles() {
     if (basename(file).startsWith('_')) continue
     const rel = file.slice(BLOG_DIR.length).replace(/\\/g, '/').replace(/^\//, '')
     const parts = rel.split('/')
-    const lang = parts.pop().replace(/\.md$/, '')
-    if (!LANGS.includes(lang)) continue
-    const path = parts.join('/')
+    const name = parts.pop().replace(/\.md$/, '')
+    // 目录形式（foo/zh-cn.md）：最后一段是语言，文章标识取它上面的目录
+    // 扁平形式（foo.md、2026/10-31.md）：没有语言段，整条相对路径（保留 .md）就是标识
+    const isLangFile = LANGS.includes(name)
+    const path = isLangFile ? parts.join('/') : rel
+    if (!path) continue // 根目录下直接放 zh-cn.md 之类，没有文章名，跳过
+    const lang = isLangFile ? name : DEFAULT_LANG
     let entry = byPath.get(path)
     if (!entry) byPath.set(path, (entry = { files: {} }))
     entry.files[lang] = file
@@ -183,6 +200,15 @@ export async function scanArticles() {
 export async function readArticle(path) {
   const rel = safeRel(path)
   if (!rel) return null
+  // 扁平文章：一个 md 就是一个语言版本，文件名不是语言时按默认语言算
+  if (rel.endsWith('.md')) {
+    const raw = await readFile(blogPath(rel), 'utf-8').catch(() => null)
+    if (raw === null) return null
+    const { data, content } = matter(raw)
+    const name = basename(rel, '.md')
+    const lang = LANGS.includes(name) ? name : DEFAULT_LANG
+    return { path: rel, files: { [lang]: { content, data: normalizeData(data) } } }
+  }
   const dir = blogPath(rel)
   const loaded = await Promise.all(
     LANGS.map(async (lang) => {
@@ -204,82 +230,104 @@ export async function saveArticle(path, lang, payload) {
   if (!LANGS.includes(lang)) return { error: `不支持的语言: ${lang}` }
 
   const data = normalizeData(payload.data || {})
+  const isFlat = rel.endsWith('.md')
   const newRel = safeRel(data.slugId || rel)
   if (!newRel) return { error: '无效的 slugId' }
-  data.slugId = newRel
+  data.slugId = newRel.replace(/\.md$/, '')
+
+  // slugId 一律不带 .md；扁平文章的标识带 .md，比较时统一规范化
+  const newSlug = newRel.replace(/\.md$/, '')
+  const targetRel = isFlat ? `${newSlug}.md` : newSlug
 
   // 读取当前文件已有的 slugId，用于判断是否真的发生了 slugId 修改
-  const raw = await readFile(join(blogPath(rel), `${lang}.md`), 'utf-8').catch(() => null)
+  const raw = await readFile(articleFile(rel, lang), 'utf-8').catch(() => null)
   const oldSlug = raw ? String(matter(raw).data?.slugId ?? '') : ''
 
   const writeOne = async (p, l, d, body) => {
-    const file = join(blogPath(p), `${l}.md`)
+    const file = p.endsWith('.md') ? blogPath(p) : join(blogPath(p), `${l}.md`)
     await mkdir(dirname(file), { recursive: true })
     await writeFile(file, matter.stringify(body || '', d), 'utf-8')
     forget(file)
   }
 
-  // 仅当 slugId 与当前文件夹路径一致（CMS 创建的文章，slugId == 路径）且确实被修改时，
-  // 才整体移动文件夹；否则 slugId 只是元数据，绝不改变文件夹位置
-  if (newRel !== rel && oldSlug === rel) {
-    // 目标目录已存在且不是当前目录 -> 拒绝，避免覆盖
-    const exists = await stat(blogPath(newRel)).then((s) => s.isDirectory()).catch(() => false)
-    if (exists) return { error: `目标路径已存在: ${newRel}` }
+  // 仅当 slugId 与当前路径一致（CMS 创建的文章，slugId == 路径）且确实被修改时，
+  // 才整体搬动；否则 slugId 只是元数据，绝不改变文件位置
+  if (targetRel !== rel && sameSlug(oldSlug, rel)) {
+    // 目标已存在且不是当前文章 -> 拒绝，避免覆盖
+    const exists = await stat(blogPath(targetRel)).then(() => true).catch(() => false)
+    if (exists) return { error: `目标路径已存在: ${targetRel}` }
 
-    // 移动所有语言版本，并更新其 slugId
-    const oldDir = blogPath(rel)
-    for (const l of LANGS) {
-      try {
-        const r = await readFile(join(oldDir, `${l}.md`), 'utf-8')
-        const { data: d } = matter(r)
-        d.slugId = newRel
-        await writeOne(newRel, l, d, matter(r).content)
-      } catch {
-        /* 该语言版本不存在 */
-      }
+    // 搬动所有语言版本并更新其 slugId（扁平文章只有一个文件）
+    const sources = isFlat
+      ? [{ lang, file: articleFile(rel, lang) }]
+      : LANGS.map((l) => ({ lang: l, file: articleFile(rel, l) }))
+
+    for (const src of sources) {
+      const r = await readFile(src.file, 'utf-8').catch(() => null)
+      if (r === null) continue
+      const parsed = matter(r)
+      parsed.data.slugId = newSlug
+      await writeOne(targetRel, src.lang, parsed.data, parsed.content)
     }
-    await rm(oldDir, { recursive: true, force: true })
-    forgetUnder(oldDir)
+
+    const oldAbs = blogPath(rel)
+    await rm(oldAbs, { recursive: true, force: true })
+    forgetUnder(oldAbs)
     // 最后写入本次保存的内容（覆盖上面同语言的文件）
-    await writeOne(newRel, lang, data, payload.body)
-    return { path: newRel, moved: true }
+    await writeOne(targetRel, lang, data, payload.body)
+    return { path: targetRel, moved: true }
   }
 
   await writeOne(rel, lang, data, payload.body)
   return { path: rel }
 }
 
-// 新建文章（创建文件夹 + 模板文件）
+// 新建文章（目录形式建文件夹，扁平形式只建一个 md）
 export async function createArticle(path, lang) {
   const rel = safeRel(path)
   if (!rel) return { error: '无效路径' }
   if (!LANGS.includes(lang)) return { error: `不支持的语言: ${lang}` }
 
-  const dir = blogPath(rel)
-  const exists = await stat(join(dir, `${lang}.md`)).then(() => true).catch(() => false)
+  const isFlat = rel.endsWith('.md')
+  if (isFlat && lang !== DEFAULT_LANG) {
+    return { error: '扁平文件只支持默认语言，多语言请用目录形式' }
+  }
+
+  const file = articleFile(rel, lang)
+  const exists = await stat(file).then(() => true).catch(() => false)
   if (exists) return { error: '文章已存在' }
 
+  const slug = rel.replace(/\.md$/, '')
   const data = normalizeData({
-    title: rel.split('/').pop(),
+    title: slug.split('/').pop(),
     pubDate: new Date().toISOString().slice(0, 10),
     description: '',
     image: '',
     draft: true,
-    slugId: rel,
+    slugId: slug,
     category: '',
     pinTop: 0,
   })
-  await mkdir(dir, { recursive: true })
-  const file = join(dir, `${lang}.md`)
+  await mkdir(dirname(file), { recursive: true })
   await writeFile(file, matter.stringify('', data), 'utf-8')
   forget(file)
   return { path: rel }
 }
 
-// 删除整篇文章（整个文件夹）
+// 删除整篇文章（目录形式删整个文件夹，扁平形式删单个 md）
 export async function deleteArticle(path) {
   const rel = safeRel(path)
   if (!rel) return { error: '无效路径' }
+
+  if (rel.endsWith('.md')) {
+    const file = blogPath(rel)
+    const st = await stat(file).then((s) => s).catch(() => null)
+    if (!st?.isFile()) return { error: '文章不存在' }
+    await rm(file, { force: true })
+    forget(file)
+    return { ok: true }
+  }
+
   const dir = blogPath(rel)
   const st = await stat(dir).then((s) => s).catch(() => null)
   if (!st?.isDirectory()) return { error: '文章不存在' }
