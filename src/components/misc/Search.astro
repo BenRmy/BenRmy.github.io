@@ -357,7 +357,9 @@ async function performSearch(query) {
   {
     // 只需要初始化一次：重复调用 search() 即可，不必每次 destroy + init
     try {
-      const searchResultsData = await pagefind.search(query);
+      // 统一走串行队列（见 Header 的 ensurePagefind）：同实例并发 search 会互相卡死
+      const runner = window.__momoPagefindSearch ?? ((q) => pagefind.search(q));
+      const searchResultsData = await runner(query);
 
       // 并发取回每条结果的数据（原来是逐条 await，串行等待）
       const results = (await Promise.all(
