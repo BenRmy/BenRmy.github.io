@@ -31,7 +31,7 @@ const { entry, title, description, image, pubDate, url, fallback, priority = fal
 const currentLang = Astro.currentLocale || i18n!.defaultLocale;
 const t = i18nit(currentLang);
 
-const pageUrl = getRelativeLocaleUrl(currentLang, "/blog/" + url);
+const pageUrl = getRelativeLocaleUrl(currentLang, "/post/" + url);
 
 const { remarkPluginFrontmatter } = await render(entry);
 

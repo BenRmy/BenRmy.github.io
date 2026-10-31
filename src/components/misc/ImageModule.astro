@@ -5,6 +5,7 @@ import { siteConfig } from '@/config';
 import { Image } from "astro:assets";
 import path from "path"
 import { getLqipGradient } from "@utils/getLqipColors";
+import { withBase } from "@utils/urlUtils";
 
 interface Props {
     src: string;
@@ -39,6 +40,8 @@ const isLocal = !(
     src.startsWith("http")
 );
 const isPublic = src.startsWith("/");
+// public/ 下的资源不经过 Vite，部署子路径（BASE_URL）必须自己补，否则项目页会 404
+const resolvedSrc = isPublic ? withBase(src) : src;
 
 let imageLoad;
 let lqipGradient = "";
@@ -105,7 +108,7 @@ const safeWidths = filteredWidths && filteredWidths.length > 0 ? filteredWidths 
     {
         !isLocal && (
         <img 
-            src={src} 
+            src={resolvedSrc} 
             alt={alt || ""} 
             id={id} 
             width={width} 

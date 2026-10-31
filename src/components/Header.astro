@@ -9,6 +9,7 @@ import { i18n } from "astro:config/client";
 import i18nit from '@i18n/translation'
 import { getRelativeLocaleUrl } from '@utils/urlUtils';
 import { getBlogEntrySort } from '@utils/contentUtils';
+import { stripLocale } from '@utils/seo';
 
 const currentLang = Astro.currentLocale || i18n!.defaultLocale;
 const t = i18nit(currentLang);
@@ -20,22 +21,13 @@ const categories = [...new Set(blogPosts.map(post => post.data.category || 'unde
 
 
 // 获取当前页面在不同语言下的路径
-const getLocalePath = (path: string, targetLocale: string) => {
-  const currentPath = Astro.url.pathname;
-  const defaultLocale = i18n?.defaultLocale || "zh-cn";
-  
-  // 移除当前语言前缀
-  let basePath = currentPath;
-  if (currentLang && currentLang !== defaultLocale) {
-    basePath = currentPath.replace(`/${currentLang}`, "") || "/";
-  }
-  
-  // 添加目标语言前缀（默认语言不需要前缀）
-  if (targetLocale && targetLocale !== defaultLocale) {
-    return `/${targetLocale}${basePath}`;
-  }
-  
-  return basePath;
+const getLocalePath = (_path: string, targetLocale: string) => {
+  // Astro.url.pathname 含部署子路径（项目页是 /blog/...）和当前语言前缀，两者都要先剥掉，
+  // 再交给 getRelativeLocaleUrl 统一拼「语言前缀 + base」，避免拼出 /blog/en/en/...
+  const rest = stripLocale(Astro.url.pathname);
+  // 404 页是所有错误地址共用的同一个文件，没有对应的语言版本，切换语言一律回首页
+  const target = /^\/404/.test(rest) ? '/' : rest;
+  return getRelativeLocaleUrl(targetLocale, target);
 };
 
 const indexPage = getRelativeLocaleUrl(currentLang, "/");
@@ -400,7 +392,7 @@ if (profileConfig.indexPage) {
 import { registerPageInit } from '@utils/pageInit';
 import { lockPageScroll, unlockPageScroll } from '@utils/scrollLock';
 import { currentLangFromUrl, DEFAULT_LOCALE, LOCALES, syncDocumentLang } from '@utils/locale';
-import { getRelativeLocaleUrl } from '@utils/urlUtils';
+import { getRelativeLocaleUrl, stripBase } from '@utils/urlUtils';
 import { subscribeScroll } from '@utils/scrollBus';
 
 // 客户端换页时本脚本只会被执行一次（Astro 产出的是带 src 的 module，模块表去重）；
@@ -702,8 +694,10 @@ registerPageInit(initNavIndicator);
  * 由 registerPageInit 注册：首屏也要跑一次（swup 下首屏没有 astro:page-load）。
  */
 function syncPersistedHeader() {
-  const pathname = window.location.pathname;
-  const currentLang = currentLangFromUrl(pathname);
+  // 两套路径：rawPathname 带部署子路径（比较 href 用），pathname 是站内路径（拼链接用）
+  const rawPathname = window.location.pathname;
+  const pathname = stripBase(rawPathname);
+  const currentLang = currentLangFromUrl(rawPathname);
   // <html lang> 与地址不一致时以地址为准（swup 的 head 插件是「顺带」同步，不是真源）
   syncDocumentLang();
 
@@ -730,7 +724,7 @@ function syncPersistedHeader() {
   //    原来这里要分别 querySelectorAll 三遍（[data-i18n-path]、[data-i18n-labels]、
   //    #nav-bar 与 #mobile-menu-drawer 各自的选中态），每次换页都多扫几遍 DOM。
   //    顺序仍然是「先写 href 与文案，再判选中」——选中态依赖写好的 href 才判得准。
-  const here = normalizePath(pathname);
+  const here = normalizePath(rawPathname);
   const isActiveHref = (href) =>
     normalizePath(new URL(href, window.location.origin).pathname) === here;
 

@@ -7,9 +7,9 @@ import type { FriendLink } from "./types/friend"
 import type { I18nConfig } from "./types/i18n"
 
 export const siteConfig: SiteConfig = {
-    title: "Momo", // Title of the site, used in the tab in the browser and in SEO
+    title: "BenRmy", // Title of the site, used in the tab in the browser and in SEO
     subTitle: "Blog", // Subtitle of the site
-    rootSiteUrl: "https://momo.motues.top", // Root URL of the site, used for generating absolute URLs for SEO and social sharing
+    rootSiteUrl: "https://benrmy.github.io", // Root URL of the site (excluding the deploy sub-path), used for generating absolute URLs for SEO and social sharing
 
     favicon: "/favicon/favicon.ico", // Path of the favicon, relative to the /public directory
 
@@ -55,11 +55,11 @@ export const siteConfig: SiteConfig = {
 }
 
 export const profileConfig: ProfileConfig = {
-    avatar: "assets/Motues.jpg", // Relative to the /src directory. Relative to the /public directory if it starts with '/'
-    name: "Motues", // Used in the footer of the blog
-    description: "Life is colorful!", // Used in SEO
-    indexPage: "https://www.motues.top", // The homepage, used in footer and SEO
-    startYear: 2024, // The year the site was created, used in the footer
+    avatar: "assets/avatar.jpg", // Relative to the /src directory. Relative to the /public directory if it starts with '/'
+    name: "BenRmy", // Used in the footer of the blog
+    description: "AI 应用开发 / 逆向工程 / Copilot Studio", // Used in SEO
+    indexPage: "https://benrmy.github.io", // The homepage, used in footer and SEO
+    startYear: 2026, // The year the site was created, used in the footer
 }
 
 export const licenseConfig: LicenseConfig = {
@@ -75,15 +75,15 @@ export const i18nConfig: I18nConfig = {
         "zh-cn": {
             Cover: {
                 title: {
-                    home: "欢迎来到 Momo 的博客",
+                    home: "欢迎来到 BenRmy 的博客",
                     archive: "文章归档",
                     about: "关于",
                     friends: "友链",
                 },
                 subTitle: {
-                    home: "生活多彩！",
+                    home: "记录技术与生活",
                     archive: "共 {count} 篇文章", // {count} will be replaced with the total number of articles
-                    about: "一个极简的Blog模板",
+                    about: "写代码，也拆代码",
                     friends: "有趣的灵魂",
                 }
             }
@@ -91,15 +91,15 @@ export const i18nConfig: I18nConfig = {
         "en": {
             Cover: {
                 title: {
-                    home: "Welcome to Momo's Blog",
+                    home: "Welcome to BenRmy's Blog",
                     archive: "Archive",
                     about: "About",
                     friends: "Friends",
                 },
                 subTitle: {
-                    home: "Life is colorful!",
+                    home: "Notes on tech and life",
                     archive: "Total of {count} articles",
-                    about: "A minimalist blog template",
+                    about: "Build it, then take it apart",
                     friends: "Interesting Souls",
                 }
             }
@@ -108,12 +108,6 @@ export const i18nConfig: I18nConfig = {
 };
 
 export const friendLinkConfig: FriendLink[] = [
-    {
-        name: 'Motues', // Name of the friend link
-        avatar: 'https://www.motues.top/avatar.jpg', // Avatar image of the friend link
-        url: 'https://www.motues.top', // URL of the friend link
-        description: 'Like River!' // Description of the friend link, set to an empty string if not needed
-    },
     {
         name: 'Astro',
         avatar: 'https://avatars.githubusercontent.com/u/44914786',

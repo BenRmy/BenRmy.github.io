@@ -8,6 +8,7 @@
  *   - 顶栏在容器之外不会重建，语言菜单的链接与高亮必须在每次换页后按地址重算。
  */
 import { i18n } from 'astro:config/client';
+import { stripBase } from './urlUtils';
 
 /** 站点支持的语言代码（zh-cn / en ...），与 astro.config 的 i18n.locales 同源 */
 const locales = i18n?.locales || ['zh-cn'];
@@ -21,10 +22,13 @@ export const DEFAULT_LOCALE: string = i18n?.defaultLocale || LOCALES[0] || 'zh-c
 /**
  * 从地址推导当前语言。
  * 只看带前缀的语言：`/en` 与 `/en/...` 命中 en，其余一律算默认语言。
+ * 部署在子路径（GitHub Pages 项目页 /blog/）时，语言前缀前面还压着一层 base，
+ * 所以先剥掉 base 再判断。
  */
 export function currentLangFromUrl(pathname: string = window.location.pathname): string {
+  const path = stripBase(pathname)
   const hit = LOCALES.filter((code) => code !== DEFAULT_LOCALE).find(
-    (code) => pathname === `/${code}` || pathname.startsWith(`/${code}/`),
+    (code) => path === `/${code}` || path.startsWith(`/${code}/`),
   );
   return hit ?? DEFAULT_LOCALE;
 }

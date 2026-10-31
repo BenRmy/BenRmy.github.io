@@ -26,6 +26,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { siteConfig } from '@/config';
 import { photoCoverEnabled } from '@utils/photoCover';
+import { withBase } from '@utils/urlUtils';
 
 interface Props {
     /** 首页 hero 模式；不传就是内页那种淡淡的背景 */
@@ -57,7 +58,8 @@ if (enabled && photoCover.image.startsWith('/')) {
     const manualPreview = photoCover.image.replace(/\/([^/]+)$/, '/preview/$1');
 
     if (existsSync(join(publicRoot, manualPreview))) {
-        preview = manualPreview;
+        // 浏览器要的是 URL，不是磁盘路径：部署子路径要一起带上
+        preview = withBase(manualPreview);
     } else {
         try {
             const buffer = await sharp(join(publicRoot, photoCover.image))

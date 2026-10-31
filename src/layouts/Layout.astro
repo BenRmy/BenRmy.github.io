@@ -12,6 +12,7 @@ import photoCoverCss from '@styles/photo-cover.css?url';
 import { i18n } from "astro:config/client";
 import { getSiteTitle } from '@utils/siteTitle';
 import { photoCoverEnabled } from '@utils/photoCover';
+import { baseUrl } from '@utils/urlUtils';
 import {
   absoluteUrl,
   bcp47,
@@ -81,7 +82,10 @@ const schemas = [
 const jsonLd = JSON.stringify(schemas).replace(/</g, '\\u003c');
 
 // ---- 第三方域名预热（统计脚本 / 评论后端）----
-const umamiScript = 'https://umami.motues.top/script.js';
+// 统计脚本改由 src/config.ts 的 siteConfig.analytics 决定；不配置就一个请求都不发
+// （原先这里硬编码了模板作者的 umami 实例，部署到别人的域名下会把访问数据送给他人）
+const umamiScript = siteConfig.analytics?.umami?.src ?? '';
+const umamiWebsiteId = siteConfig.analytics?.umami?.websiteId ?? '';
 function originOf(value?: string) {
   if (!value) return '';
   try {
@@ -193,8 +197,8 @@ const photoCoverOn = photoCoverEnabled();
 
     <meta name="theme-color" media="(prefers-color-scheme: light)" content="#fbfbfb">
     <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0a0a0a">
-    <link rel="alternate" type="application/rss+xml" title={getSiteTitle()} href={new URL("rss.xml", Astro.site)} >
-    <link rel="icon" href={siteConfig.favicon} type="image/x-icon">
+    <link rel="alternate" type="application/rss+xml" title={getSiteTitle()} href={absoluteUrl('/rss.xml')} >
+    <link rel="icon" href={baseUrl(siteConfig.favicon)} type="image/x-icon">
 
     <!-- OverlayScrollbars 的样式表：必须阻塞（桥接属性要在首屏前把原生滚动条藏掉） -->
     {osEnabled && <link rel="stylesheet" href={osCss}>}
@@ -212,14 +216,22 @@ const photoCoverOn = photoCoverEnabled();
     {markdownFont && <noscript><link rel="stylesheet" href={lxgwBrightCss}></noscript>}
 
     <!-- 第三方域名连接预热：统计域名随时可能用到，评论后端只在文章页预热 -->
-    <link rel="dns-prefetch" href={originOf(umamiScript)}>
-    <link rel="preconnect" href={originOf(umamiScript)} crossorigin>
+    {umamiScript && <link rel="dns-prefetch" href={originOf(umamiScript)}>}
+    {umamiScript && <link rel="preconnect" href={originOf(umamiScript)} crossorigin>}
     {commentOrigin && <link rel="dns-prefetch" href={commentOrigin}>}
     {commentOrigin && <link rel="preconnect" href={commentOrigin} crossorigin>}
 
     <!-- data-swup-ignore-script：umami 的采集脚本只加载一次；
          换页的 PV 由下面的内联脚本在 astro:page-load 时手动上报 -->
-    <script defer src={umamiScript} data-hash is:inline data-swup-ignore-script></script>
+    {umamiScript && (
+        <script
+            defer
+            src={umamiScript}
+            data-website-id={umamiWebsiteId || undefined}
+            data-hash
+            is:inline
+            data-swup-ignore-script></script>
+    )}
     <title>{pageTitle}</title>
     <script type="application/ld+json" set:html={jsonLd}></script>
     <script is:inline data-swup-ignore-script>
@@ -338,12 +350,14 @@ const photoCoverOn = photoCoverEnabled();
 
         // 4. 统计：swup 不会整页刷新，umami 的自动 PV 统计不会触发，这里补一次。
         //    astro:page-load 只在真实访问时派发（首屏不派发），所以首屏不会重复计数。
-        document.addEventListener('astro:page-load', () => {
-            const url = window.location.pathname + window.location.search;
-            if (window.__momoUmamiUrl === url) return;
-            window.__momoUmamiUrl = url;
-            window.umami?.track?.();
-        });
+        if (document.querySelector('script[data-website-id], script[src*="umami"]')) {
+            document.addEventListener('astro:page-load', () => {
+                const url = window.location.pathname + window.location.search;
+                if (window.__momoUmamiUrl === url) return;
+                window.__momoUmamiUrl = url;
+                window.umami?.track?.();
+            });
+        }
     </script>
 </head>
 <body class="h-full bg-[var(--bg-color)]" {...aosBodyAttrs} {...osAttrs}>

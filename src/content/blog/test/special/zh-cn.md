@@ -81,7 +81,7 @@ $E = mc^2$
 [![封面](./cover.jpg)](https://motues.top "点击查看大图"){target="_blank"}
 ```
 
-> 也可以用来跳转到站内页面，例如 `[Markdown 基本功能](/blog/markdown){target="_blank"}`，写法完全一样。
+> 也可以用来跳转到站内页面，例如 `[Markdown 基本功能](/post/markdown){target="_blank"}`，写法完全一样。
 
 ## 脚注
 
@@ -202,7 +202,7 @@ console.log('Hello World');
 
 ## Expressive Code 测试
 
-代码块由 [Expressive Code](https://expressive-code.com/) 渲染，在语言后面追加选项即可（完整写法见 [Markdown 基本功能](/blog/markdown)）：
+代码块由 [Expressive Code](https://expressive-code.com/) 渲染，在语言后面追加选项即可（完整写法见 [Markdown 基本功能](/post/markdown)）：
 
 ````
 ```js title="src/app.js" {3} ins={4} del={5} showLineNumbers

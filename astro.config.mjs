@@ -16,6 +16,7 @@ import { GithubCardComponent } from './src/plugins/rehype-component-github-card.
 import { QuoteComponent } from "./src/plugins/rehype-component-quote.ts"
 import { customFigurePlugin } from "./src/plugins/rehype-figure-plugin.ts";
 import { rehypeLinkTarget } from "./src/plugins/rehype-link-target.ts";
+import { rehypeBasePath } from "./src/plugins/rehype-base-path.ts";
 import { rehypeImageCollage } from "./src/plugins/rehype-image-collage.ts";
 import { remarkCombined } from './src/plugins/remark-combined.ts';
 import { remarkTypst } from './src/plugins/remark-typst.ts';
@@ -38,9 +39,15 @@ const ecSettings = siteConfig.expressiveCode ?? {};
 const ecEnabled = ecSettings.enable !== false;
 const collageSettings = siteConfig.theme?.imageCollage ?? {};
 
+// GitHub Pages 项目页把站点挂在子路径下（https://<user>.github.io/<repo>/），
+// 所有站内绝对路径（链接、public 资源、搜索索引）都必须带上这个前缀。
+// 本地跑根路径：SITE_BASE=/ pnpm dev
+const BASE_PATH = process.env.SITE_BASE ?? '/blog/';
+
 // https://astro.build/config
 export default defineConfig({
-  site: siteConfig.rootSiteUrl || 'https://momo.motues.top', // Root URL of site
+  site: siteConfig.rootSiteUrl, // Root URL of site
+  base: BASE_PATH,
   i18n: {
     locales: i18nConfig.supportedLanguages,
     defaultLocale: i18nConfig.defaultLanguage,
@@ -112,6 +119,8 @@ export default defineConfig({
         customFigurePlugin,
         // [文字](url){target="_blank"}：新标签页打开 + 右上箭头图标
         rehypeLinkTarget,
+        // 正文里的站内绝对路径补部署子路径（项目页挂在 /<repo>/ 下）
+        [rehypeBasePath, { base: BASE_PATH }],
         [rehypeImageCollage, {
           enable: collageSettings.enable !== false,
           maxColumns: collageSettings.maxColumns ?? 4,

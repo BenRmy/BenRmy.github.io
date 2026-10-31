@@ -77,7 +77,7 @@ Only `target`, `rel` and `class` are recognised inside the attribute block; anyt
 [![Cover](./cover.jpg)](https://motues.top "Click to enlarge"){target="_blank"}
 ```
 
-> It works for in-site pages too, e.g. `[Markdown Basics](/en/blog/markdown){target="_blank"}`.
+> It works for in-site pages too, e.g. `[Markdown Basics](/en/post/markdown){target="_blank"}`.
 
 ## Footnotes
 
@@ -199,7 +199,7 @@ This is a tip box with a custom header. The header displays as "Custom Header" i
 
 ## Expressive Code Testing
 
-Code blocks are rendered by [Expressive Code](https://expressive-code.com/); append the options after the language (see the [Markdown Basics](/en/blog/markdown) article for the full list):
+Code blocks are rendered by [Expressive Code](https://expressive-code.com/); append the options after the language (see the [Markdown Basics](/en/post/markdown) article for the full list):
 
 ````
 ```js title="src/app.js" {3} ins={4} del={5} showLineNumbers

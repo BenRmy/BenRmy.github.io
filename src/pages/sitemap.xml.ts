@@ -12,7 +12,7 @@ import { absoluteUrl, bcp47, normalizePath } from '@utils/seo';
 import { getRelativeLocaleUrl } from '@utils/urlUtils';
 
 interface Entry {
-  /** 语言无关路径，如 `/`、`/2/`、`/blog/xxx/` */
+  /** 语言无关路径，如 `/`、`/2/`、`/post/xxx/` */
   rest: string;
   lastmod?: string;
   /** 各语言下的绝对地址 */
@@ -66,7 +66,7 @@ export async function GET(_context: APIContext) {
     for (const page of ['/archives/', '/about/', '/friends/']) push(page);
 
     // 文章（404 不在站点地图里）
-    for (const post of posts) push(`/blog/${post.id}/`, isoDate(post.data.pubDate));
+    for (const post of posts) push(`/post/${post.id}/`, isoDate(post.data.pubDate));
   }
 
   const blocks: string[] = [];

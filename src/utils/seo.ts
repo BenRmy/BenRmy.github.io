@@ -1,7 +1,7 @@
 /**
  * SEO 工具集：绝对 URL、canonical、hreflang 多语言对照、结构化数据与社交分享图。
  *
- * 约定：站内路径一律传相对路径（如 `/blog/xxx/`），由 absoluteUrl 统一补上
+ * 约定：站内路径一律传相对路径（如 `/post/xxx/`），由 absoluteUrl 统一补上
  * `siteConfig.rootSiteUrl` 与 `import.meta.env.BASE_URL`，避免各处硬编码域名。
  */
 import { getImage } from 'astro:assets'

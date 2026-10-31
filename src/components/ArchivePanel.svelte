@@ -143,7 +143,7 @@
                     {#each postsByYear[year] as post (post.id)}
                         <div animate:flip={{ duration: 380, easing: cubicOut }} in:fade={{ duration: 180, easing: cubicOut }} out:fade={{ duration: 150 }} >
                             <a 
-                                href={getRelativeLocaleUrl(currentLang, `/blog/${post.id}`)} 
+                                href={getRelativeLocaleUrl(currentLang, `/post/${post.id}`)} 
                                 class="flex items-center gap-4 active:bg-[var(--button-hover-color)] hover:bg-[var(--button-hover-color)] p-2 rounded transition-colors duration-200 group"
                             >
                                 <span class="text-[var(--text-color-70)] min-w-[80px] md:min-w-[120px]">

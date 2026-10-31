@@ -44,6 +44,15 @@ export type SiteConfig = {
         enable: boolean;
         theme: string;
     };
+    /** 第三方统计（可选）。不配置就完全不加载任何统计脚本 */
+    analytics?: {
+        umami?: {
+            /** 采集脚本地址，例如 https://umami.example.com/script.js */
+            src: string;
+            /** 站点 ID（自建 umami 用 data-website-id 区分站点时才需要） */
+            websiteId?: string;
+        };
+    };
 }
 
 export type ProfileConfig = {

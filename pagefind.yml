@@ -1,3 +1,8 @@
+# 站点部署在子路径下（GitHub Pages 项目页 https://benrmy.github.io/blog/），
+# 搜索结果里的链接必须带这个前缀，否则点进去会掉到域名根。
+# 换仓库名 / 换自定义域名时，这里要和 astro.config.mjs 的 base 一起改。
+base_url: /blog/
+
 exclude_selectors:
   - "span.katex"
   - "span.katex-display"
