@@ -15,9 +15,6 @@
   let selectedCategories = [];
   const t = i18nit(currentLang);
 
-  // 提取所有分类并去重
-  $: categories = [...new Set(sortedPosts.map(post => post.data.category || 'undefined'))].sort();
-
   // 响应式过滤逻辑 - 特殊处理 undefined 情况
   $: filteredPosts = selectedCategories.length > 0
     ? sortedPosts.filter(post => {
@@ -56,73 +53,10 @@
 
     window.addEventListener('popstate', handlePopState);
 
-    const syncAsideHeight = () => {
-      const mainContent = document.getElementById('archive-content');
-      const aside = document.getElementById('category-sidebar');
-      
-      if (mainContent && aside) {
-        const mainHeight = mainContent.offsetHeight;
-        aside.style.height = `${mainHeight}px`;
-        
-      }
-    };
-
-    // 使用 setTimeout 确保 DOM 已完全渲染（特别是异步加载内容时）
-    setTimeout(syncAsideHeight, 0);
-
-    let resizeTimer;
-    const handleResize = () => {
-      clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(syncAsideHeight, 100);
-    };
-    window.addEventListener('resize', handleResize);
-
-    const mainContent = document.getElementById('archive-content');
-    let mutationObserver;
-    if (mainContent) {
-      mutationObserver = new MutationObserver(syncAsideHeight);
-      mutationObserver.observe(mainContent, {
-        childList: true,    // 监听子节点增删
-        subtree: true,      // 监听后代节点
-        attributes: false,  // 不需要监听属性变化（性能优化）
-        characterData: false
-      });
-    }
-
     return () => {
         window.removeEventListener('popstate', handlePopState);
-        window.removeEventListener('resize', handleResize);
-        clearTimeout(resizeTimer);
-        
-        if (mutationObserver) {
-            mutationObserver.disconnect();
-        }
     }
   });
-
-  // 筛选点击逻辑
-  function toggleCategory(cat) {
-    if (cat === null) {
-      selectedCategories = []; // 点击“全部”则清空
-    } else {
-      if (selectedCategories.includes(cat)) {
-        // 如果已选中，则移除
-        selectedCategories = selectedCategories.filter(c => c !== cat);
-      } else {
-        // 如果未选中，则添加
-        selectedCategories = [...selectedCategories, cat];
-      }
-    }
-
-    // 更新 URL，方便分享和刷新
-    const url = new URL(window.location);
-    if (selectedCategories.length > 0) {
-      url.searchParams.set('category', selectedCategories.join(','));
-    } else {
-      url.searchParams.delete('category');
-    }
-    window.history.replaceState({ ...window.history.state, url: url.pathname + url.search }, '', url);
-  }
 
 </script>
 
@@ -171,29 +105,3 @@
         {/each}
     </div>
 </div>
-
-    <aside 
-        id="category-sidebar"
-        class="hidden lg:block absolute left-[var(--toc-offset-left)] top-70 bottom-0 w-[var(--category-width)]">
-        <div class="sticky top-24">
-            <div class="flex items-center gap-2 text-[var(--text-color)] font-bold mb-4 border-b border-[var(--button-border-color)] pb-2 uppercase tracking-wider">
-                <HashtagIcon class="text-xs" />
-                <span>{t("category")}</span>
-            </div>
-
-            <div class="flex flex-wrap gap-2">
-                
-                {#each categories as cat}
-                    <button 
-                        on:click={() => toggleCategory(cat)}
-                        class="px-3 py-1 text-xs rounded-md transition-[color,background-color,border-color] border
-                        {selectedCategories.includes(cat) 
-                            ? 'bg-[var(--accent-bg)] text-[var(--accent-fg)] border-[var(--accent-bg)]' 
-                            : 'hover:border-[var(--link-color)] border-[var(--button-border-color)] text-[var(--text-color)]'}"
-                    >
-                        {cat === 'undefined' ? t("pagecard.uncategorized") : cat}
-                    </button>
-                {/each}
-            </div>
-        </div>
-    </aside>
