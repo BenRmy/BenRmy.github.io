@@ -893,20 +893,10 @@ function ensurePagefind() {
     // 通知搜索组件：Pagefind 准备好了（老监听者仍有效）
     document.dispatchEvent(new CustomEvent('pagefind-ready'));
 
-    // 预热：worker 启动 + wasm 编译是首次检索 4 秒的主要成本（索引文件本身很小），
-    // 趁空闲阶段先烧掉。走同一条队列，因此不会和用户的检索并发。
-    if (!window.__momoPagefindWarmed) {
-      window.__momoPagefindWarmed = true;
-      if (typeof pagefind.preload === 'function') {
-        // preload('') 只把 worker 与 wasm 拉起来（实测 0.5s），不加载任何结果分片，
-        // 比空跑一次真实检索轻得多；同样走上面那条队列，不会与用户检索并发。
-        const warm = chain.then(() => pagefind.preload(''));
-        chain = warm.then(() => {}, () => {});
-        warm.catch(() => {});
-      } else {
-        window.__momoPagefindSearch('a').catch(() => {});
-      }
-    }
+    // 注意：不要在初始化阶段预热（pagefind.preload('') / 空跑一次检索）。
+    // 实测 preload('') 在索引尚未就绪时会挂住，而所有检索都排在同一条队列上，
+    // 结果就是用户一进站就搜时永远等不到结果。首次检索慢几百毫秒，
+    // 远好过「偶发但致命」的卡死。
     return pagefind;
   })().catch((error) => {
     // 失败就不缓存，下一次交互还能重试，否则整个会话都搜不了
