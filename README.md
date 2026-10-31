@@ -1,84 +1,107 @@
-# Momo
+# BenRmy 的博客
 
-<div align="center">
-    <img src="./doc/images/dark-light.jpg">
-    <p>一个极简的Blog模板，使用 <a href="https://astro.build/">Astro</a> 搭建</p>
-    <small><ins>简体中文</ins></small> <small><a href="./doc/README_en.md">English</a></small> 
-</div>
+> 写代码，也拆代码。
 
-## ✨ 特性
+线上站点：<https://benrmy.github.io> · 本仓库即站点源码（`BenRmy/BenRmy.github.io`）
 
-Momo 取自小红书📕，每个新用户最初的昵称，象征着初始新生。博客的设计理念也来自于此，从简约出发，在复杂功能与简约设计之间达到一种平衡。
+这里放我觉得值得留档的东西：AI 应用开发中踩到的具体问题（Copilot Studio 智能体、对话流与自动化），逆向分析的案例（Rizin 静态分析、Frida 动态插桩），以及一些工程上的判断。不做教程站，只记录结论和验证过程。
 
-* **极简设计**：页面设计简约，黑白为主色调，蓝色进行点缀
-* **深色模式**：支持手动切换或自动跟随系统
-* **照片封面**：首页第 1 页可用一整屏照片做封面，标题与副标题居中放大、叠一层可调的黑色蒙版；向下滚动时标题平滑落回原位、照片淡成整页底色，其余页面也会铺一层很淡的照片
-* **客户端换页**：站内跳转由 [swup](https://swup.js.org/) 接管，不再整页刷新，带悬停预取、淡入淡出与「前进 / 后退回到原位置」
-* **移动端适配**：组件针对移动端进行优化，拥有和电脑浏览器一样的流畅体验
-* **图片体验**：点击图片打开灯箱；连续放置的多张图片自动拼成网格；文章内图片支持 LQIP 弥散渐变占位
-* **丰富的 Markdown 语法**：KaTeX、Typst（构建期编译为 SVG）、Alert 提示块、GitHub / 网易云音乐卡片、引用组件、注音（Ruby）、折叠、彩虹文字、下划线、新标签页链接，Expressive Code 等
-* **本地搜索**：使用 [pagefind](https://pagefind.app/) 实现本地化搜索，无需外部服务
-* **国际化（i18n）**：支持多语言切换，目前支持简体中文、英文
-* **评论功能**：支持本地部署和 Cloudflare 部署，具体参考 [Backend](https://github.com/Motues/Momo-Backend)；后端开启无感验证后，访客无需点选图片或输入验证码即可自动完成人机校验；后端配置表情包地址后，评论框与回复框带表情面板（图片表情与颜文字），可插入光标处并在正文里渲染成小图
-* **SEO**：canonical、hreflang 多语言对照、Open Graph / Twitter Card、结构化数据、`sitemap.xml` 与 `robots.txt`
-* **本地 CMS 管理后台**：`pnpm cms` 启动，可视化编辑文章、实时预览（与博客共用同一条 Markdown 管线）与网站配置，编辑页每 60 秒自动保存，无需手动改 Markdown
-* **命令行工具**：`pnpm momo` 提供配置备份/恢复、一键更新、新建文章、环境检查等能力
-* 其他基本功能：文章分类，目录，RSS订阅，字数统计，阅读时间
+## 这个站
 
-## 🚀 快速开始
+- **Astro 7** 静态构建，整站预渲染成 HTML，没有服务端
+- **swup** 接管站内跳转，不整页刷新，带悬停预取与前进/后退位置还原
+- **pagefind** 在构建期生成搜索索引，站内检索不依赖任何外部服务
+- **中英双语**（默认中文），canonical / hreflang / Open Graph / RSS / sitemap 齐全
+- 托管在 **GitHub Pages**，推 `main` 即自动构建发布
+- 评论默认关闭，后端未接入
 
-> 环境要求：Node.js **>= 22**（推荐 24 LTS；本地 CMS 管理后台需要 **>= 22.18**），包管理使用 [pnpm](https://pnpm.io/zh/)
+## 内容结构
 
-1. 克隆本项目
-    ```bash
-    git clone https://github.com/Motues/Momo.git
-    cd Momo
-    ```
-2. 运行 `pnpm install` 安装依赖（使用 `npm install -g pnpm` 安装 `pnpm`）
-3. 运行 `pnpm dev` 启动开发服务器
+一个目录一篇文章，每种语言一个文件：
 
-## 🔧 配置
+```
+src/content/blog/<slug>/
+├── zh-cn.md
+└── en.md
+```
 
-参考 [配置指南](./doc/config_zh-cn.md)，详细信息可以访问 [Momo](https://momo.motues.top/intro/config)，阅读对应文章获取详细信息。
+文章 frontmatter 示例：
 
-站点信息、主题开关、多语言与首页 Cover 文案统一在 `src/config.ts` 中配置；`astro.config.mjs` 的 `site` 与 `i18n` 会自动读取该文件的配置。
+```yaml
+---
+title: 重新开张
+pubDate: 2026-10-31
+description: 站点换了一套引擎重建，从这里重新开始。
+category: 随笔
+image: ""
+draft: false
+slugId: benrmy/hello
+---
+```
 
-## 📚 更新
+独立页面（关于、友链）走同一套约定：`src/content/spec/{about,friends}/{zh-cn,en}.md`。
 
-参考 [更新指南](./doc/release_zh-cn.md)，介绍如何更新项目，详细信息可以访问 [Momo](https://momo.motues.top/intro/release)。
+## 本地开发
 
-执行 `pnpm momo update` 可以自动完成「检查 GitHub Release → 下载新版本源码 → 备份 → 覆盖代码 → 删除新版本已移除的旧文件 → 安装依赖」，并提示本次更新中需要手工合并的配置文件。默认比对**最新 Release**；想第一时间用上尚未发版的新代码时，加 `--commit <分支/标签/SHA>`（例如 `pnpm momo update --commit main`）即可改为同步某个提交，它会先读远端文件树与本地文件逐个比对，`--check` / `--dry-run` 不用下载源码包就能列出差异。你自己的文章与图片（`src/content`、`src/assets`、`public`）和 `src/config.ts` 会原样保留；删除只针对上一版模板里有、而新版本已移除的文件（依据更新时写下的 `.momo/manifest.json`，你自己新增的文件不受影响，加 `--no-delete` 可只覆盖不删除）。先加 `--dry-run` 可以只预览变更、不写入任何文件。国内直连 GitHub 超时也不用额外配置：它会自动并行探测 GitHub 直连与公共镜像并挑最快的下载，超时或镜像返回错误内容就自动换源（可用 `--mirror <镜像前缀>` 或环境变量 `MOMO_MIRROR` 指定镜像，`--mirror direct` 强制只用直连）。
+环境要求：Node.js **>= 22**（CI 用 24 LTS），包管理 [pnpm](https://pnpm.io/)。
 
-## 🍃 分支
+```bash
+git clone https://github.com/BenRmy/BenRmy.github.io.git
+cd BenRmy.github.io
+pnpm install
+pnpm dev        # http://localhost:4321
+```
 
-下面是一些分支，会不定期进行维护，无法保证与 `main` 分支一致
-
-* `memos`：实现 Memos 卡片功能
-* `v5`：v5 版本，已经停止维护
-
-## ⚡ 指令
-
-以下所有的指令可以在根目录下面执行
+常用指令：
 
 | 指令 | 作用 |
 | --- | --- |
-| `pnpm install` | 安装依赖 |
-| `pnpm dev` | 启动本地服务器，运行在 `http://localhost:4321` |
-| `pnpm build` | 构建发布版本到 `./dist` 目录下（含 pagefind 搜索索引） |
-| `pnpm preview` | 预览构建后的发布版本 |
-| `pnpm astro ...` | 运行 `astro` 命令，例如 `astro add` |
-| `pnpm cms` | 启动本地 CMS 管理后台，运行在 `http://localhost:5188`（首次使用前先执行 `pnpm install`） |
-| `pnpm momo new [path]` | 新建文章，路径省略时按日期自动生成，例如 `pnpm momo new docs/test` |
-| `pnpm momo backup` | 备份 `src/config.ts` 到 `.backup/`（加 `--config` 备份全部配置文件，加 `--all` 再连同文章内容与图片） |
-| `pnpm momo restore [名称]` | 从备份恢复（默认最近一次） |
-| `pnpm momo update` | 从 [GitHub Release](https://github.com/Motues/Momo/releases) 更新模板代码并同步依赖（默认最新 Release，可用 `--commit <分支/标签/SHA>` 改为同步某个提交；保留自己的文章与图片，删除新版本已移除的文件；`--dry-run` 预览变更，`--no-delete` 只覆盖不删除，`--mirror` 指定下载镜像） |
-| `pnpm momo clean` | 清理构建产物与缓存（加 `--all` 连同 `node_modules`） |
-| `pnpm momo doctor` | 检查环境、依赖与项目状态 |
-| `pnpm momo --help` | 查看全部 momo 命令与选项 |
+| `pnpm dev` | 本地开发服务器，`http://localhost:4321` |
+| `pnpm build` | 构建到 `dist/`，并生成 pagefind 搜索索引 |
+| `pnpm preview` | 预览构建结果 |
+| `pnpm cms` | 本地 CMS 后台，`http://localhost:5188`，可视化写文章 |
+| `pnpm momo new <path>` | 命令行新建文章，如 `pnpm momo new docs/test` |
 
+注意：`pnpm build` 实际执行 `astro build && pagefind --site dist`。搜索索引是构建产物，`pnpm dev` 下没有索引，站内搜索要在 `pnpm build && pnpm preview` 之后才可用。
 
-## 📚 参考
+## 部署
 
-* [Astro](https://astro.build/)
-* [Fuwari](https://github.com/saicaca/fuwari)
-* [Tyndall](https://github.com/moyuin-aka/tyndall-public)
+`.github/workflows/deploy.yml`：推 `main` → `pnpm install` → `pnpm build` → 上传 `dist` → `deploy-pages`。
+
+仓库 Settings → Pages 的 Source 选 **GitHub Actions**，不使用 `gh-pages` 分支，所以 `dist/` 不入库。
+
+这是用户站（`BenRmy/BenRmy.github.io`），根路径部署，`base` 为 `/`。若以后要搬回项目页的子路径，构建时给 `SITE_BASE=/blog` 即可：`astro.config.mjs` 会读它，`rehype-base-path` 插件负责给正文里的 `/post/...`、`/images/...` 这类绝对链接补前缀。
+
+## 目录
+
+```
+src/
+├── config.ts          # 站点信息、主题开关、i18n 文案、友链
+├── content/           # 文章与独立页面（Markdown）
+├── components/        # 组件，含搜索、目录、PostCard 等
+├── layouts/           # Layout 与文章布局
+├── pages/             # 路由：首页 / post / archives / about / friends
+├── plugins/           # rehype 插件（base 前缀、链接 target）
+├── i18n/              # 多语言词条
+├── styles/            # 全局样式
+└── utils/             # 工具函数
+public/                # favicon、封面等静态资源
+cms/                   # 本地 CMS 管理后台
+script/momo/           # momo 命令行工具
+```
+
+## 主题来源与许可
+
+站点基于 [Momo](https://github.com/Motues/Momo) 模板改造（MIT），相对上游做了这些改动：
+
+- 品牌、头像、文案与站点配置换成自己的，清空模板示例文章
+- 文章路由 `/blog/<id>` 改为 `/post/<id>`，避免与日志页 `/blog` 同名
+- 适配根路径部署：`base` 前缀由 rehype 插件在正文层补齐，并清理 favicon / RSS / sitemap 的硬编码路径
+- 重写搜索加载链路：统一入口 + 串行队列，去掉会阻塞的 `init()` 与预取
+- 关闭 umami 统计（未配置即不请求）与评论
+
+代码沿用上游 **MIT License**（见 `LICENSE`，版权归 Momo 原作者）；站内文章采用 **CC BY-NC-SA 4.0**。
+
+## 联系
+
+GitHub：[@BenRmy](https://github.com/BenRmy)

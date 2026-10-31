@@ -10,7 +10,7 @@
 - 托管在 **GitHub Pages**，推 `main` 自动部署
 - 中英双语，默认语言中文
 
-站点源码在 [BenRmy/blog](https://github.com/BenRmy/blog)。
+站点源码在 [BenRmy/BenRmy.github.io](https://github.com/BenRmy/BenRmy.github.io)。
 
 ## 联系
 

@@ -10,7 +10,7 @@ This site is a place for notes worth keeping: concrete problems from AI applicat
 - Hosted on **GitHub Pages**, deployed on every push to `main`
 - Bilingual, Chinese by default
 
-Source lives at [BenRmy/blog](https://github.com/BenRmy/blog).
+Source lives at [BenRmy/BenRmy.github.io](https://github.com/BenRmy/BenRmy.github.io).
 
 ## Contact
 
