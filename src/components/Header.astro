@@ -878,6 +878,13 @@ function ensurePagefind() {
     // options() 只记配置，真正的 init 要到第一次 search() 才发生。
     // 这里显式跑完，消费者拿到的实例一定是就绪的。
     await pagefind.init?.();
+    // 预热 worker 与 wasm：首次 search 的 4 秒基本都花在这上面（索引文件本身很小）。
+    // 趁空闲预取阶段先跑掉，用户真正搜索时通常只剩几百毫秒。
+    try {
+      await pagefind.preload?.('');
+    } catch {
+      /* 预热失败不影响正常搜索，忽略 */
+    }
     window.pagefind = pagefind;
     // 通知搜索组件：Pagefind 准备好了（老监听者仍有效）
     document.dispatchEvent(new CustomEvent('pagefind-ready'));
