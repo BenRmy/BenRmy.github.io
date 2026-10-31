@@ -7,6 +7,7 @@
     "build": "astro build && pagefind --site dist",
     "preview": "astro preview",
     "astro": "astro",
+    "check": "astro check",
     "momo": "node script/momo/index.js",
     "cms": "cd cms && pnpm dev"
   },
@@ -48,6 +49,7 @@
     "unist-util-visit": "^5.0.0"
   },
   "devDependencies": {
+    "@astrojs/check": "^0.9.12",
     "@iconify-json/fa6-brands": "^1.2.6",
     "@iconify-json/fa6-solid": "^1.2.4",
     "@iconify-json/fluent": "^1.2.45",

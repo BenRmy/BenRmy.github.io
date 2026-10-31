@@ -388,7 +388,8 @@ function detectEngine(win: Window): number {
 		if ('mozInnerScreenX' in win) return 2;
 		// Chrome / Edge / Opera 都暴露 window.chrome
 		if (typeof (win as any).chrome === 'object' && (win as any).chrome !== null) return 1;
-		if (navigator.vendor === 'Apple Computer, Inc.') return 3;
+		// navigator.vendor 已被标为 deprecated（ts 6385），这里走无类型索引取值，语义不变
+		if ((win.navigator as unknown as Record<string, unknown>).vendor === 'Apple Computer, Inc.') return 3;
 	} catch {
 		/* 取不到就返回未知 */
 	}
