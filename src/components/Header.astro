@@ -897,7 +897,15 @@ function ensurePagefind() {
     // 趁空闲阶段先烧掉。走同一条队列，因此不会和用户的检索并发。
     if (!window.__momoPagefindWarmed) {
       window.__momoPagefindWarmed = true;
-      window.__momoPagefindSearch('a').catch(() => {});
+      if (typeof pagefind.preload === 'function') {
+        // preload('') 只把 worker 与 wasm 拉起来（实测 0.5s），不加载任何结果分片，
+        // 比空跑一次真实检索轻得多；同样走上面那条队列，不会与用户检索并发。
+        const warm = chain.then(() => pagefind.preload(''));
+        chain = warm.then(() => {}, () => {});
+        warm.catch(() => {});
+      } else {
+        window.__momoPagefindSearch('a').catch(() => {});
+      }
     }
     return pagefind;
   })().catch((error) => {
@@ -949,11 +957,11 @@ function prefetchPagefind() {
   if (conn?.effectiveType && /(^|-)2g$/.test(conn.effectiveType)) return;
 
   const run = () => { if (!window.pagefind) loadAndSearch({ quiet: true }); };
-  if (typeof window.requestIdleCallback === 'function') {
-    window.requestIdleCallback(run, { timeout: 3000 });
-  } else {
-    setTimeout(run, 1200);
-  }
+  // 尽早开始：worker 启动 + wasm 编译要几秒，等 requestIdleCallback 再开始，
+  // 用户一进站就点搜索时几乎必然撞上加载中。放在 load 之后立刻跑，
+  // 既不阻塞首屏渲染，也能让预热在几秒内完成。
+  if (document.readyState === 'complete') setTimeout(run, 0);
+  else window.addEventListener('load', () => setTimeout(run, 0), { once: true });
 }
 
 // 首屏直接预取一次（swup 下首屏没有 astro:page-load），换页时由监听兜底
