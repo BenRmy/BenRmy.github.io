@@ -6,7 +6,7 @@ import { absoluteUrl } from "../utils/seo";
 import { baseUrl } from "../utils/urlUtils";
 import type { APIContext } from "astro";
 
-export async function GET(context: APIContext) {
+export async function GET(_context: APIContext) {
     const blog = await getBlogEntrySort(i18nConfig.defaultLanguage);
     return rss({
         title: getSiteTitle(),

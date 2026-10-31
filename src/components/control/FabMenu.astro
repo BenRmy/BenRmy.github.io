@@ -124,11 +124,11 @@ function initFabMenu() {
   const progressCircle = document.getElementById('progress-circle');
   const tocTrigger = document.getElementById('tocTrigger');
   const closeToc = document.getElementById('closeToc');
-  const tocLinks = document.querySelectorAll('.toc-link');
+  const tocLinks = document.querySelectorAll<HTMLAnchorElement>('.toc-link');
   
   if (!container || !trigger) return;
 
-  const threshold = parseInt(container.dataset.scrollDistance) || 100;
+  const threshold = parseInt(container.dataset.scrollDistance ?? '') || 100;
   let isTocOpen = false;
   let scrollPosOnTocOpen = 0;
 
@@ -136,13 +136,13 @@ function initFabMenu() {
   let docHeight = 0;
   // 上一次真正写进 DOM 的进度（百分比），变化小于 0.5% 时不再触碰样式
   let lastPercent = -1;
-  let lastVisible = null;
+  let lastVisible: boolean | null = null;
 
   function measure() {
     docHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
   }
 
-  function updateScroll(scrollTop) {
+  function updateScroll(scrollTop: number) {
     // 控制 FAB 整体显示/隐藏（只在状态真的变化时改 class）。
     // 这里切的是 is-visible（CSS 里对应 visibility）而不是 opacity，原因见文件底部样式：
     // 容器只要 opacity < 1 就会成为 backdrop 根，内部按钮的 backdrop-blur 在动画期间失效。
@@ -150,11 +150,11 @@ function initFabMenu() {
     if (visible !== lastVisible) {
       lastVisible = visible;
       if (visible) {
-        container.classList.remove('pointer-events-none');
-        container.classList.add('is-visible', 'pointer-events-auto');
+        container!.classList.remove('pointer-events-none');
+        container!.classList.add('is-visible', 'pointer-events-auto');
       } else {
-        container.classList.add('pointer-events-none');
-        container.classList.remove('is-visible', 'pointer-events-auto', 'is-active', 'toc-active');
+        container!.classList.add('pointer-events-none');
+        container!.classList.remove('is-visible', 'pointer-events-auto', 'is-active', 'toc-active');
         isTocOpen = false; // 回到顶部时同时关闭目录状态
       }
     }
@@ -162,7 +162,7 @@ function initFabMenu() {
     // 滑动页面时平滑关闭目录 (设置 50px 的缓冲阈值，防止误触)
     if (isTocOpen && Math.abs(scrollTop - scrollPosOnTocOpen) > 50) {
       isTocOpen = false;
-      container.classList.remove('toc-active');
+      container!.classList.remove('toc-active');
     }
 
     // 更新进度条
@@ -186,7 +186,7 @@ function initFabMenu() {
   }
 
   // 目录高亮观察器（换页时必须断开，否则会持续观察已卸载的标题节点）
-  let tocObserver = null;
+  let tocObserver: IntersectionObserver | null = null;
 
   // 主按钮切换
   trigger.onclick = (e) => {
@@ -222,14 +222,14 @@ function initFabMenu() {
   }
 
 tocLinks.forEach(link => {
-    link.onclick = (e) => {
+    link.onclick = (e: MouseEvent) => {
       e.preventDefault(); // 阻止默认的锚点跳转，以便使用平滑滚动
       
       // 点击即时反馈：移除所有高亮，给当前点击的项加上高亮
       tocLinks.forEach(l => l.classList.remove('is-active'));
       link.classList.add('is-active');
 
-      const targetId = link.getAttribute('href').substring(1);
+      const targetId = link.getAttribute('href')!.substring(1);
       const targetElement = document.getElementById(targetId);
       
       if (targetElement) {
@@ -254,8 +254,8 @@ tocLinks.forEach(link => {
 
   // 提取所有正文里的标题元素
   const headingElements = Array.from(tocLinks)
-    .map(link => document.getElementById(link.getAttribute('href').substring(1)))
-    .filter(Boolean); // 过滤掉不存在的元素
+    .map(link => document.getElementById(link.getAttribute('href')!.substring(1)))
+    .filter((el): el is HTMLElement => el !== null); // 过滤掉不存在的元素
 
   if (headingElements.length > 0) {
     // 设置观察器参数：当标题进入视窗顶部向下 10% 到 20% 的区域时触发
@@ -282,7 +282,7 @@ tocLinks.forEach(link => {
     }, observerOptions);
 
     // 开始观察所有标题
-    headingElements.forEach(el => tocObserver.observe(el));
+    headingElements.forEach(el => tocObserver!.observe(el));
   }
 
   // 回到顶部
@@ -307,15 +307,15 @@ tocLinks.forEach(link => {
   if (backComment) {
     backComment.onclick = () => {
       const comments = document.getElementById('comments');
-      comments.scrollIntoView({ behavior: 'smooth' });
+      comments!.scrollIntoView({ behavior: 'smooth' });
       container.classList.remove('is-active', 'toc-active');
       isTocOpen = false;
     };
   }
 
   // 点击外部关闭所有展开项
-  const onDocumentClick = (e) => {
-    if (!container.contains(e.target)) {
+  const onDocumentClick = (e: MouseEvent) => {
+    if (!(e.target instanceof Node) || !container.contains(e.target)) {
       container.classList.remove('is-active', 'toc-active');
       isTocOpen = false;
     }

@@ -99,7 +99,7 @@ function syncSearchLocale() {
   if (!tr) return;
   window.__momoSearchTranslations = tr;
 
-  const input = document.getElementById('search-input');
+  const input = document.getElementById('search-input') as HTMLInputElement | null;
   if (input) input.placeholder = `${tr.placeholder}...`;
 
   // 只改「默认提示」那一份；已经显示搜索结果 / 无结果时不要覆盖用户看到的内容
@@ -168,11 +168,11 @@ function initSearchModal() {
   // 搜索按钮在 swup 容器外的顶栏里，用 onclick 赋值保证幂等
   searchButton.onclick = openModal;
   if (closeSearch) closeSearch.onclick = closeModal;
-  searchModal.onclick = (e) => {
-    if (!modalContent?.contains(e.target)) closeModal();
+  searchModal.onclick = (e: MouseEvent) => {
+    if (!(e.target instanceof Node) || !modalContent?.contains(e.target)) closeModal();
   };
 
-  const onKeyDown = (e) => {
+  const onKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'Escape' && !searchModal.classList.contains('opacity-0')) {
       closeModal();
     }

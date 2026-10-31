@@ -56,7 +56,6 @@ const enum InstrOp {
 }
 
 const INSTR_OP_STRIDE = 3;
-const INSTR_REG_COUNT = 4;
 
 /** 元素标签候选：与服务端一致 */
 const INSTR_TAGS = ['div', 'span', 'p', 'section', 'b', 'i', 'em', 'u'] as const;

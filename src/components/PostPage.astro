@@ -1,12 +1,12 @@
 ---
 import { blogCoverUrl} from '@utils/urlUtils'
 import PostCard from '@components/PostCard.astro';
-import type { CollectionEntry } from 'astro:content';
+import type { BlogEntryWithLocaleStatus } from '@utils/contentUtils';
 
 const { page } = Astro.props;
 
 ---
-{page.data.map((entry: CollectionEntry<"blog">, index: number) => (
+{page.data.map((entry: BlogEntryWithLocaleStatus, index: number) => (
         <PostCard 
             entry={entry}
             title={entry.data.title} 

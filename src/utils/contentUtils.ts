@@ -15,7 +15,7 @@ export type BlogEntryWithLocaleStatus = CollectionEntry<'blog'> & {
 };
 
 export async function getBlogEntrySort(
-  lang: string,
+  lang?: string,
   filter?: (entry: CollectionEntry<'blog'>) => boolean | undefined,
   sort?: (a: CollectionEntry<'blog'>, b: CollectionEntry<'blog'>) => number
 ): Promise<BlogEntryWithLocaleStatus[]> { // 修改返回类型

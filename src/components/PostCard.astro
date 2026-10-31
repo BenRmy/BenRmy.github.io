@@ -20,7 +20,7 @@ interface Props {
     image: string;
     pubDate: Date;
     url: string;
-    fallback: boolean;
+    fallback?: boolean;
     priority?: boolean;
     /** AOS 入场延迟（毫秒，必须是 50 的整数倍——aos.css 只给这些档位写了 transition-delay） */
     delay?: number;

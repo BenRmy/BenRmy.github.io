@@ -104,7 +104,7 @@ if (enabled && photoCover.image.startsWith('/')) {
         const root = document.documentElement;
         const copy = document.getElementById('photo-cover-text');
         const hero = copy?.closest('.photo-cover-hero');
-        const spacer = document.querySelector('.photo-cover-spacer');
+        const spacer = document.querySelector<HTMLElement>('.photo-cover-spacer');
         const arrow = document.getElementById('photo-cover-arrow');
         if (!hero || !copy || !spacer) return;
 
@@ -120,11 +120,11 @@ if (enabled && photoCover.image.startsWith('/')) {
         function measure() {
             const previous = root.style.getPropertyValue('--photo-p');
             root.style.setProperty('--photo-p', '1');
-            const copyHeight = copy.offsetHeight;
+            const copyHeight = copy!.offsetHeight;
             root.style.setProperty('--photo-copy-h', `${copyHeight}px`);
             root.style.setProperty('--photo-p', previous || '0');
 
-            const headerHeight = hero.getBoundingClientRect().top + window.scrollY;
+            const headerHeight = hero!.getBoundingClientRect().top + window.scrollY;
             root.style.setProperty('--photo-header', `${headerHeight}px`);
 
             // 过渡距离 = 整整一屏。
@@ -137,7 +137,7 @@ if (enabled && photoCover.image.startsWith('/')) {
             const fixedHeader = headerHeight < 1
                 ? (document.getElementById('main-header')?.getBoundingClientRect().height || 0)
                 : 0;
-            distance = Math.max(spacer.offsetHeight - fixedHeader, 1);
+            distance = Math.max(spacer!.offsetHeight - fixedHeader, 1);
         }
 
         let ticking = false;

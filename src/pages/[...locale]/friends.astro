@@ -7,7 +7,7 @@ import Markdown from '@components/misc/Markdown.astro';
 import { getSpec } from '@utils/contentUtils'
 
 import i18nit from '@i18n/translation';
-import { getEntry, render } from 'astro:content'
+import { render } from 'astro:content'
 import { i18n } from "astro:config/client";
 
 export async function getStaticPaths() {
@@ -46,7 +46,7 @@ const pageDescription = `${t("cover.title.friends")} - ${t("cover.subTitle.frien
                                 src={friend.avatar} 
                                 alt={friend.name} 
                                 class="w-16 h-16 rounded-full object-cover mr-4 flex-shrink-0"
-                                onerror="this.src='https://www.gravatar.com/avatar/?d=mp'"
+                                onerror={"this.src='https://www.gravatar.com/avatar/?d=mp'"}
                             />
                             <div class="min-w-0">
                                 <h2 class="font-bold text-lg truncate transition-colors duration-300 group-hover:text-[var(--link-color)] group-active:text-[var(--link-color)]">{friend.name}</h2>

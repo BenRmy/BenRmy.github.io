@@ -34,16 +34,16 @@ if (typeof window !== 'undefined') {
   
   // 统一放在 window 上：顶栏在 swup 容器外不会重建，但初始化每次换页都会重跑，
   // 用块级变量会丢掉上一次的定时器与监听器引用。
-  window.__momoTheme = window.__momoTheme || { toastTimer: null };
+  window.__momoTheme = window.__momoTheme || { toastTimer: undefined };
 
   function initThemeToggle() {
     const htmlRoot = document.querySelector('html');
     const themeToggle = document.getElementById('themeToggle');
     if (!htmlRoot || !themeToggle) return;
 
-    const getTheme = () => {
+    const getTheme = (): 'light' | 'dark' | 'system' => {
       const localStorageTheme = localStorage?.getItem("theme") ?? '';
-      if (['dark', 'light', 'system'].includes(localStorageTheme)) {
+      if (localStorageTheme === 'dark' || localStorageTheme === 'light' || localStorageTheme === 'system') {
         return localStorageTheme;
       }
       return 'system';
@@ -51,12 +51,12 @@ if (typeof window !== 'undefined') {
 
     // 从 DOM 属性实时获取翻译
     const translations = {
-      light: themeToggle.dataset.tLight,
-      dark: themeToggle.dataset.tDark,
-      system: themeToggle.dataset.tSystem
+      light: themeToggle.dataset.tLight!,
+      dark: themeToggle.dataset.tDark!,
+      system: themeToggle.dataset.tSystem!
     };
 
-    function showThemeToast(themeName) {
+    function showThemeToast(themeName: 'light' | 'dark' | 'system') {
       let toast = document.getElementById('theme-toast') || (() => {
         const t = document.createElement('div');
         t.id = 'theme-toast';
@@ -74,7 +74,7 @@ if (typeof window !== 'undefined') {
       window.__momoTheme.toastTimer = setTimeout(() => toast.classList.remove('show'), 3000);
     }
 
-    const setTheme = (themeSet, isFirstLoad = false) => { 
+    const setTheme = (themeSet: 'light' | 'dark' | 'system', isFirstLoad = false) => {
       if (themeSet === 'dark') {
         htmlRoot.setAttribute('data-theme', 'dark');
         htmlRoot.classList.remove('system-theme');
@@ -98,7 +98,7 @@ if (typeof window !== 'undefined') {
     };
 
     // 系统主题变化监听器
-    const handleSystemThemeChange = (e) => {
+    const handleSystemThemeChange = (e: MediaQueryListEvent) => {
       if (htmlRoot.classList.contains('system-theme')) {
         if (e.matches) {
           htmlRoot.setAttribute('data-theme', 'dark');
@@ -120,7 +120,7 @@ if (typeof window !== 'undefined') {
 
     const handleToggleClick = () => {
       const currentTheme = localStorage.getItem('theme') || 'system';
-      let nextTheme;
+      let nextTheme: 'light' | 'dark' | 'system';
       if (currentTheme === 'light') nextTheme = 'dark';
       else if (currentTheme === 'dark') nextTheme = 'system';
       else nextTheme = 'light';

@@ -11,14 +11,12 @@ import { siteConfig } from '@/config';
 import { i18n } from "astro:config/client";
 import type { CollectionEntry } from 'astro:content';
 import type { GetStaticPaths } from 'astro';
-import { getRelativeLocaleUrl } from '@utils/urlUtils';
 import { photoCoverEnabled } from '@utils/photoCover';
 
 import i18nit from '@i18n/translation'
 
 // 所有分页数据都在 "page" 参数中传递
 const { page } = Astro.props;
-const { locale = i18n!.defaultLocale } = Astro.params;
 
 const currentLang = Astro.currentLocale || i18n!.defaultLocale;
 const t = i18nit(currentLang);
@@ -43,9 +41,9 @@ export const getStaticPaths = (async ({ paginate }) => {
 
   // 如果启用了国际化，为每个语言环境生成分页路径
   const paths = [];
-  for (const locale of i18n.locales) {
+  for (const locale of i18n!.locales) {
     const localeCode = typeof locale === 'string' ? locale : locale.path;
-    const localeParam = localeCode === i18n.defaultLocale ? undefined : localeCode;
+    const localeParam = localeCode === i18n!.defaultLocale ? undefined : localeCode;
     const blogEntries = await getBlogEntrySort(localeParam, undefined, createPinTopSort());
     const paginatedPaths = paginate(blogEntries, { 
       pageSize: siteConfig.pageSize,
@@ -61,7 +59,6 @@ export const getStaticPaths = (async ({ paginate }) => {
 
 
 
-const indexPage = getRelativeLocaleUrl(locale, '/');
 // 副标题为空时标签栏只显示主标题；分页页追加页码，避免第 2 页起的标题完全重复
 const pageTitle = page.currentPage > 1
     ? `${getSiteTitle()} (${page.currentPage})`

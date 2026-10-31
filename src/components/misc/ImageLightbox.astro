@@ -248,7 +248,7 @@
     // 换页后正文图片列表已经不同，缓存作废
     imagesCache = null
 
-    const root = document.getElementById('momo-lightbox') as HTMLElement | null
+    const root = document.getElementById('momo-lightbox') as HTMLElement
     if (!root || root.dataset.ready === '1') return
     root.dataset.ready = '1'
 

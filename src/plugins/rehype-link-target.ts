@@ -1,5 +1,5 @@
 import { h } from 'hastscript';
-import type { Element, ElementContent, Properties, Root, RootContent } from 'hast';
+import type { Element, ElementContent, Properties, Root } from 'hast';
 
 /**
  * 链接后面**紧跟**属性块 `{target="_blank"}` 时改为新标签页打开，并在链接后追加右上箭头图标。

@@ -10,7 +10,6 @@ import { i18n } from "astro:config/client";
 
 
 const currentLang = Astro.currentLocale || i18n!.defaultLocale;
-const defaultLocale = i18n!.defaultLocale;
 const t = i18nit(currentLang);
 
 export async function getStaticPaths() {

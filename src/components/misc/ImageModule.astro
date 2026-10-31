@@ -54,7 +54,7 @@ if (isLocal) {
   //
   // caseSensitive: false 只影响 glob 的“发现”阶段：Vite 默认大小写敏感，
   // 相机导出的 .JPG / .PNG 这类大写后缀会整个漏掉，封面直接变成 undefined。
-  const images = import.meta.glob<ImageMetadata>(
+  const images = import.meta.glob<ImageMetadata & { fsPath: string }>(
     "../../**/*.{jpg,jpeg,jfif,png,apng,webp,avif,gif,svg,tiff,tif,bmp,ico,heic}",
     { import: "default", caseSensitive: false }
   );

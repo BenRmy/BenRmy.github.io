@@ -21,7 +21,7 @@ export function remarkTypst() {
       try {
         const title = node.meta ? node.meta.trim() : '';
         const formattedTitle = title.replace(/\*(.*?)\*/g, '<em>$1</em>');
-        const svg = await compiler.svg({ mainFileContent: node.value });
+        const svg = compiler.svg({ mainFileContent: node.value });
 
         const rendered: RootContent = {
           type: 'html',

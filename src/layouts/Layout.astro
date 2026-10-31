@@ -206,13 +206,13 @@ const photoCoverOn = photoCoverEnabled();
     <!-- 照片封面：同样是阻塞样式，首屏的居中标题、蒙版与淡出都靠它，不能等 -->
     {photoCoverOn && <link rel="stylesheet" href={photoCoverCss}>}
 
-    <link rel="stylesheet" data-swup-theme href={notoSerifSc400} media="print" onload="this.media='all'">
+    <link rel="stylesheet" data-swup-theme href={notoSerifSc400} media="print" onload={"this.media='all'"}>
     <noscript><link rel="stylesheet" href={notoSerifSc400}></noscript>
-    <link rel="stylesheet" data-swup-theme href={notoSerifSc700} media="print" onload="this.media='all'">
+    <link rel="stylesheet" data-swup-theme href={notoSerifSc700} media="print" onload={"this.media='all'"}>
     <noscript><link rel="stylesheet" href={notoSerifSc700}></noscript>
 
     <!-- 引用块字体（LXGW Bright Medium）：只有渲染正文的页面才需要，同样非阻塞 -->
-    {markdownFont && <link rel="stylesheet" href={lxgwBrightCss} media="print" onload="this.media='all'">}
+    {markdownFont && <link rel="stylesheet" href={lxgwBrightCss} media="print" onload={"this.media='all'"}>}
     {markdownFont && <noscript><link rel="stylesheet" href={lxgwBrightCss}></noscript>}
 
     <!-- 第三方域名连接预热：统计域名随时可能用到，评论后端只在文章页预热 -->

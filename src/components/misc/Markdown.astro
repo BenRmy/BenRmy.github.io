@@ -20,7 +20,7 @@ const className = Astro.props.class
   import { registerPageInit } from '@utils/pageInit';
 
   function setupSpoilers() {
-    const spoilers = document.querySelectorAll('.spoiler');
+    const spoilers = document.querySelectorAll<HTMLElement>('.spoiler');
     
     spoilers.forEach(el => {
       // 幂等守卫：同一个元素只绑定一次
@@ -28,9 +28,9 @@ const className = Astro.props.class
       if (el.dataset.spoilerBound === '1') return;
       el.dataset.spoilerBound = '1';
 
-      let timeoutId = null;
+      let timeoutId: ReturnType<typeof setTimeout> | undefined;
       let clickTime = 0;
-      let scrollHandler = null;
+      let scrollHandler: (() => void) | null = null;
 
       const removeScrollHandler = () => {
         if (scrollHandler) {
@@ -77,7 +77,7 @@ const className = Astro.props.class
   // LQIP 图片的淡入：关闭 LQIP 时插件不会输出 .lqip-markdown-img，这里自然就是空操作，
   // 因此不需要再按 siteConfig.theme.LQIP 拆成另一个 <script>（少一个内联脚本）
   function handleLqipImages() {
-    const lqipImages = document.querySelectorAll('.lqip-markdown-img');
+    const lqipImages = document.querySelectorAll<HTMLImageElement>('.lqip-markdown-img');
     lqipImages.forEach(img => {
       if (img.complete) {
         img.classList.add('lqip-loaded');

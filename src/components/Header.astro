@@ -412,14 +412,14 @@ function initMobileNav() {
 
   window.__momoMobileNav?.cleanup?.();
 
-  let closeTimer = null;
+  let closeTimer: ReturnType<typeof setTimeout> | undefined;
   // 抽屉的滚动锁是计数式的（@utils/scrollLock），所以必须只在「状态真的翻转」时加减：
   // 连续点两次会先 clearTimeout 掉待执行的解锁、再补一次加锁，没有这个守卫就会多锁一层、解不开
   let menuScrollLocked = false;
 
   function openMenu() {
     clearTimeout(closeTimer);
-    container.classList.remove('hidden');
+    container!.classList.remove('hidden');
     // 强制重绘以触发动画
     requestAnimationFrame(() => {
       overlay?.classList.add('opacity-100');
@@ -437,7 +437,7 @@ function initMobileNav() {
     
     // 等待动画结束后隐藏容器
     closeTimer = setTimeout(() => {
-      container.classList.add('hidden');
+      container!.classList.add('hidden');
       if (menuScrollLocked) {
         menuScrollLocked = false;
         unlockPageScroll();
@@ -459,7 +459,7 @@ function initMobileNav() {
   // 滚动统一走全局调度器（@utils/scrollBus），回调直接拿到当帧的 scrollY
   let lastScrollY = -1;
 
-  function updateNavBar(y) {
+  function updateNavBar(y: number) {
     if (y === lastScrollY) return;
     lastScrollY = y;
     if (!navBar || !navBarList) return;
@@ -538,7 +538,7 @@ function syncMobileCategoryFilter() {
     .split(',')
     .filter(Boolean);
 
-  list.querySelectorAll('a[data-category]').forEach((chip) => {
+  list.querySelectorAll<HTMLElement>('a[data-category]').forEach((chip) => {
     const value = chip.dataset.category ?? '';
     const isSelected = selected.includes(value);
     chip.setAttribute('aria-current', isSelected ? 'true' : 'false');
@@ -568,7 +568,7 @@ function initMobileCategoryFilter() {
 registerPageInit(initMobileCategoryFilter);
 
 /** 去掉语言前缀，得到与语言无关的路径（/en/friends/ -> /friends/） */
-function withoutLocalePrefix(pathname) {
+function withoutLocalePrefix(pathname: string) {
   const matched = LOCALES
     .filter((code) => code !== DEFAULT_LOCALE)
     .find((code) => pathname === `/${code}` || pathname.startsWith(`/${code}/`));
@@ -579,7 +579,7 @@ function withoutLocalePrefix(pathname) {
 }
 
 /** 比较路径时忽略末尾斜杠：/archives 与 /archives/ 视为同一页 */
-const normalizePath = (path) => {
+const normalizePath = (path: string) => {
   const value = String(path || '/');
   return value.length > 1 ? value.replace(/\/+$/, '') : value;
 };
@@ -597,8 +597,8 @@ const normalizePath = (path) => {
  * ------------------------------------------------------------------ */
 
 /** 当前页对应的导航链接（桌面端顶栏，移动端抽屉不算） */
-function activeNavLink() {
-  return document.querySelector('#nav-bar-list a[data-i18n-path][aria-current="page"]');
+function activeNavLink(): HTMLAnchorElement | null {
+  return document.querySelector<HTMLAnchorElement>('#nav-bar-list a[data-i18n-path][aria-current="page"]');
 }
 
 /**
@@ -608,7 +608,7 @@ function activeNavLink() {
  * 绝对定位的包含块是 padding box，而 rect 量的是 border box，漏掉这一条会整体偏 1px。
  * 链接的 rect 不含 mx-1 外边距，正好等于原来 bg-* 覆盖的范围，视觉上无变化。
  */
-function moveNavIndicator(link) {
+function moveNavIndicator(link: HTMLAnchorElement | null) {
   const indicator = document.getElementById('nav-indicator');
   const list = document.getElementById('nav-bar-list');
   if (!indicator || !list) return;
@@ -648,11 +648,11 @@ function initNavIndicator() {
 
   // 1. 点击：先乐观地滑过去，换页完成后由 syncPersistedHeader() 校正。
   //    只响应普通左键 —— 中键 / Ctrl 点击会开新标签页，页面并没有换，色块不能跟着动。
-  const onClick = (event) => {
+  const onClick = (event: MouseEvent) => {
     if (event.defaultPrevented || event.button !== 0) return;
     if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
     const link = event.target instanceof Element
-      ? event.target.closest('#nav-bar-list a[data-i18n-path]')
+      ? event.target.closest<HTMLAnchorElement>('#nav-bar-list a[data-i18n-path]')
       : null;
     if (!link || link.target === '_blank' || link.hasAttribute('download')) return;
     moveNavIndicator(link);
@@ -705,8 +705,8 @@ function syncPersistedHeader() {
   const menu = document.getElementById('language-menu');
   if (menu) {
     const basePath = withoutLocalePrefix(pathname);
-    menu.querySelectorAll('.lang-option').forEach((link) => {
-      const lang = link.dataset.lang;
+    menu.querySelectorAll<HTMLElement>('.lang-option').forEach((link) => {
+      const lang = link.dataset.lang!;
       link.setAttribute('href', getRelativeLocaleUrl(lang, basePath));
       const isActive = lang === currentLang;
       link.classList.toggle('bg-[var(--button-hover-color)]', isActive);
@@ -725,10 +725,10 @@ function syncPersistedHeader() {
   //    #nav-bar 与 #mobile-menu-drawer 各自的选中态），每次换页都多扫几遍 DOM。
   //    顺序仍然是「先写 href 与文案，再判选中」——选中态依赖写好的 href 才判得准。
   const here = normalizePath(rawPathname);
-  const isActiveHref = (href) =>
+  const isActiveHref = (href: string) =>
     normalizePath(new URL(href, window.location.origin).pathname) === here;
 
-  const applyLabel = (el) => {
+  const applyLabel = (el: Element) => {
     const raw = el.getAttribute('data-i18n-labels');
     if (!raw) return;
     let labels;
@@ -747,7 +747,7 @@ function syncPersistedHeader() {
     link.setAttribute('href', getRelativeLocaleUrl(currentLang, link.getAttribute('data-i18n-path') || '/'));
     applyLabel(link);
 
-    const active = isActiveHref(link.getAttribute('href'));
+    const active = isActiveHref(link.getAttribute('href')!);
     // 桌面端顶栏：选中态只记在 aria-current 上，底色交给独立的浮动色块（#nav-indicator）
     if (link.closest('#nav-bar')) {
       if (active) link.setAttribute('aria-current', 'page');
@@ -790,7 +790,7 @@ function initLanguageMenu() {
     languageMenu.classList.toggle('hidden');
   };
 
-  const onDocumentClick = (event) => {
+  const onDocumentClick = (event: MouseEvent) => {
     const target = event.target;
     if (target instanceof Node && !languageButton.contains(target) && !languageMenu.contains(target)) {
       languageMenu.classList.add('hidden');
@@ -821,7 +821,7 @@ function initHeaderScroll() {
 
   let lastScrollY = window.scrollY;
 
-  function updateHeader(currentScrollY) {
+  function updateHeader(currentScrollY: number) {
     const scrollDelta = currentScrollY - lastScrollY;
 
     if (window.innerWidth < 776) {
