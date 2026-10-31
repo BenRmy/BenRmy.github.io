@@ -1,0 +1,122 @@
+:root {
+  color-scheme: light;
+
+  /* 布局变量 */
+  --header-width: min(1024px,90vw);
+  --page-width: min(776px, 90vw);
+  --toc-offset-left: calc(50vw + var(--page-width) / 2 + 3rem);
+  --toc-width: calc((100vw - var(--page-width)) / 2 - 3rem);
+  --category-width: min(calc((100vw - var(--page-width)) / 3), 200px);
+}
+
+/* ---------------- 动效 tokens ----------------
+ * 全站只从这里取时长与曲线，避免每个组件各写一套（以前同一屏里混着
+ * 150 / 200 / 300 / 340 / 500ms 和 5 条不同的缓动，看起来「各动各的」）。
+ *
+ * 用 momo- 前缀是因为 Tailwind v4 的 @theme 已经占用了 --ease-out / --ease-in-out
+ * 这些名字，重名会互相覆盖。
+ *
+ * 规矩：
+ *   --momo-ease-pop 只给「有物理体积」的东西（胶囊、卡片、按钮、弹窗、菜单项）；
+ *   文字颜色一律 --momo-t-fast + --momo-ease-out，不加回弹（文字回弹显廉价）。
+ */
+:root {
+  /* 时长：颜色快、位移中、入场慢 */
+  --momo-t-fast: 140ms;
+  --momo-t-base: 220ms;
+  --momo-t-slow: 360ms;
+
+  /* 丝滑收尾：位移 / 缩放，不过冲 */
+  --momo-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  /* Q 弹：约 5% 过冲，收尾时轻轻回正（「轻微 Q」档） */
+  --momo-ease-pop: cubic-bezier(0.34, 1.56, 0.64, 1);
+  /* 抽屉 / 面板：快起慢收，不冲（整屏高度过冲会露馅） */
+  --momo-ease-sheet: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+
+/* 颜色变量 */
+/* --bg-color               页面背景色
+ * --text-color             文字基本色，通过透明度来控制颜色深浅，分为两类
+ *     --text-color:        适用于标题、正文等需要突出显示的内容
+ *     --text-color-70      适用于次要信息、辅助文本等不需要过于突出显示的内容
+ * --link-color             彩色基本色，适用于链接、按钮等颜色突出的地方（**文字 / 描边**）
+ * --accent-bg              强调色**当底色**用时的背景：蓝底按钮、选中的分类胶囊
+ * --accent-fg              压在 --accent-bg 上的文字色
+ * --button-hover-color     按钮鼠标悬停背景色
+ * --button-border-color    按钮边框色
+ *
+ * ⚠️ --link-color 只管「文字 / 描边」；要拿蓝色当底色（上面还要压字）必须用
+ * --accent-bg + --accent-fg。两者在深色模式下必须分开：链接文字要够亮
+ * （#57ace7 在 #0a0a0a 上是 7.98:1），同一个亮蓝当底色压白字却只有 2.48:1
+ * （AA 要求 4.5:1）——曾经就是把 --link-color 直接当 bg 用，深色下按钮字几乎看不清。
+*/
+:root {
+    --bg-color: #fbfbfb;
+    --text-color: #000000;
+    --text-color-70: #4c4c4c;
+    --shadow-color: rgba(0, 0, 0, 0.15);
+    /* hsl(207 79% 31%)：在页面底色上 7.52:1（AAA）。早先是 #003b6e（明度只有 22%，
+       11:1）——对比度远超需要，代价是「蓝」几乎看不出来：标题 hover 由黑变成它时，
+       肉眼几乎没有变化。 */
+    --link-color: #10558c;
+    /* 白字压 #10558c = 7.78:1 */
+    --accent-bg: #10558c;
+    --accent-fg: #ffffff;
+    --button-hover-color: #eeeeee;
+    --button-border-color: #d6d6d6;
+
+    --warning-text-color: #4d3800;
+    --warning-bg-color: #fff7ed;
+    --warning-border-color: #e6a700;
+
+    --danger-text-color: #4b1113;
+    --danger-bg-color: #ffebec;
+    --danger-border-color: #e13238;
+    
+    /* 滚动条颜色 */
+    --scrollbar-thumb: #c1c1c1;
+    --scrollbar-thumb-hover: #a8a8a8;
+    --scrollbar-track: #e1e1e1;
+
+    --selection-bg-color: #0063ba;
+    --selection-text-color: #ffffff;
+
+    --verify-success-color: #15803d;
+    --verify-success-border-color: rgba(22, 163, 74, 0.5);
+  }
+
+  [data-theme="dark"] {
+    color-scheme: dark;
+
+    --bg-color: #0a0a0a;
+    --text-color: #ffffff;
+    --text-color-70: #b5b5b5;
+    --shadow-color: rgba(255, 255, 255, 0.15);
+    --link-color: #57ace7;
+    /* 深色下链接文字用亮蓝（#0a0a0a 上 7.98:1），底色则必须压暗：
+       #0d5a94 上压白字是 7.22:1（AAA）；若图省事直接拿 #57ace7 当底色，白字只有 2.48:1。 */
+    --accent-bg: #0d5a94;
+    --accent-fg: #ffffff;
+    --button-hover-color: #262626;
+    --button-border-color: #3d3d3d;
+
+    --warning-text-color: #f2d680;
+    --warning-bg-color: #332a00;
+    --warning-border-color: #ad8002;
+
+    --danger-text-color: #f2a0a3;
+    --danger-bg-color: #3b1d1e;
+    --danger-border-color: #e13238;
+    
+    /* 滚动条颜色 */
+    --scrollbar-thumb: #4b4c4e;
+    --scrollbar-thumb-hover: #37383a;
+    --scrollbar-track: #1a202c;
+
+    --selection-bg-color: #2f5f80;
+    --selection-text-color: #ffffff;
+
+    --verify-success-color: #4ade80;
+    --verify-success-border-color: rgba(74, 222, 128, 0.45);
+  }

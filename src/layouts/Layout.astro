@@ -1,0 +1,461 @@
+---
+import { siteConfig, profileConfig } from '@/config';
+import "@styles/global.css"
+import OverlayScrollbars from '@components/control/OverlayScrollbars.astro';
+import "@styles/swup-transition.css"
+import '@fontsource/eb-garamond';
+import notoSerifSc400 from '@fontsource/noto-serif-sc/400.css?url';
+import notoSerifSc700 from '@fontsource/noto-serif-sc/700.css?url';
+import lxgwBrightCss from '@chinese-fonts/lxgwwenkaibright/dist/LXGWBright-Medium/result.css?url';
+import osCss from 'overlayscrollbars/styles/overlayscrollbars.scriptingenabled.css?url';
+import photoCoverCss from '@styles/photo-cover.css?url';
+import { i18n } from "astro:config/client";
+import { getSiteTitle } from '@utils/siteTitle';
+import { photoCoverEnabled } from '@utils/photoCover';
+import {
+  absoluteUrl,
+  bcp47,
+  defaultLocaleUrl,
+  localeAlternates,
+  normalizePath,
+  pageDescription,
+  toIsoDate,
+  websiteJsonLd,
+} from '@utils/seo';
+
+interface Props {
+  title: string;
+  lang?: string;
+  description?: string;
+  /** 社交分享图：绝对地址、站内路径或文章目录内的相对图片都可以 */
+  image?: string;
+  type?: 'website' | 'article';
+  /** 文章发布时间 / 最后修改时间（type="article" 时输出 article:* meta） */
+  publishedTime?: Date | string;
+  modifiedTime?: Date | string;
+  /** 文章分类，作为 article:section 与结构化数据的 section */
+  section?: string;
+  keywords?: string[];
+  /** 不希望被索引的页面（如 404、草稿） */
+  noindex?: boolean;
+  /** 额外的 JSON-LD 结构化数据，与站点级 WebSite 一起输出 */
+  structuredData?: Record<string, unknown> | Record<string, unknown>[];
+  /** 页面是否渲染 Markdown 正文：决定要不要异步加载引用块专用的 LXGW 字体 */
+  markdownFont?: boolean;
+}
+const {
+  title,
+  lang,
+  description,
+  image,
+  type = 'website',
+  publishedTime,
+  modifiedTime,
+  section,
+  keywords = [],
+  noindex = false,
+  structuredData,
+  markdownFont = false,
+} = Astro.props;
+
+const pageTitle = title;
+const pageLang = bcp47(lang || i18n?.defaultLocale || 'zh-cn');
+
+// ---- SEO 元信息 ----
+const canonical = absoluteUrl(normalizePath(Astro.url.pathname));
+const alternates = localeAlternates(Astro.url.pathname);
+const descriptionText = pageDescription(description);
+const shareImage = image ? absoluteUrl(image) : '';
+const ogLocale = pageLang.replace('-', '_');
+const alternateLocales = alternates
+  .filter((a) => a.lang !== (lang || i18n?.defaultLocale))
+  .map((a) => bcp47(a.lang).replace('-', '_'));
+const publishedIso = toIsoDate(publishedTime);
+const modifiedIso = toIsoDate(modifiedTime) || publishedIso;
+
+const schemas = [
+  websiteJsonLd(lang || i18n?.defaultLocale),
+  ...(Array.isArray(structuredData) ? structuredData : structuredData ? [structuredData] : []),
+];
+// 转义 < 防止正文里的 </script> 提前闭合标签
+const jsonLd = JSON.stringify(schemas).replace(/</g, '\\u003c');
+
+// ---- 第三方域名预热（统计脚本 / 评论后端）----
+const umamiScript = 'https://umami.motues.top/script.js';
+function originOf(value?: string) {
+  if (!value) return '';
+  try {
+    return new URL(value).origin;
+  } catch {
+    return ''; // 例如 twikoo 的 envId 不是 URL
+  }
+}
+const commentOrigin =
+  type === 'article' && siteConfig.comments.enable
+    ? originOf(siteConfig.comments.backendUrl)
+    : '';
+
+// ---- AOS 的过渡时长必须写在 HTML 上 ----
+// AOS 的 CSS 只给 [data-aos] 声明了 transition-property，时长完全来自
+// body[data-aos-duration="500"] [data-aos]{transition-duration:.5s}（没有其它兜底规则）。
+// 而客户端跳转时 ClientRouter 会把 <body> 整个换成新文档里的 body，
+// 只由 AOS.init() 用 JS 挂上去的属性活不过换页 —— 结果就是「从别的页面点进来时
+// 内容直接出现、刷新一下才恢复上浮」（实测跳转后 transition-duration 从 .5s 变成 0s）。
+// 所以把这三个属性写进 body 标签，让每一页的 HTML 都自带正确的值。
+// 时长必须是 50 的整数倍：aos.css 只给 50/100/…/3000 这些档位写了 transition-duration，
+// 写 560 这种值会一条规则都匹配不上，动画直接没有时长。
+// easing 用自造的名字 momo：AOS 内置名字的曲线都不过冲，momo 那条规则在 global.css 里，
+// 是唯一带「轻微 Q」的（--momo-ease-pop）。
+const aosBodyAttrs = siteConfig.theme.AOS
+  ? { 'data-aos-duration': '550', 'data-aos-easing': 'momo', 'data-aos-delay': '0' }
+  : {};
+
+// ---- OverlayScrollbars（悬浮滚动条）----
+// 关闭时既不加载它的样式与脚本，也不输出桥接属性，直接回退到浏览器原生滚动条。
+// ⚠️ 样式必须用 ?url 取出后自己挂 <link>，不能在组件里静态 import：
+// 那样 Vite 会无视下面的条件渲染，把样式合并进页面样式表，关掉开关也省不下这 ~4 KB（gzip）。
+// 用的是 scriptingenabled 版本而不是默认的 overlayscrollbars.css：桥接属性会先把原生滚动条
+// 藏掉来消除闪烁，但这以「JS 确实会执行」为前提，否则禁用 JS 的访客会拿到一个没有滚动条的
+// 页面；scriptingenabled.css 把这些样式包进 @media (scripting: enabled)，禁用 JS 时仍走原生滚动条。
+// 它必须是**阻塞样式**（要在首屏之前就位），所以不能用 media="print" 那套异步加载。
+const osConfig = siteConfig.theme.overlayScrollbars;
+const osEnabled = osConfig?.enable !== false;
+// 桥接属性：OS 初始化要建好几个元素，这段时间里原生滚动条会闪一下，
+// 提前在 <html> / <body> 上打标记，让配套样式先把原生滚动条藏掉。
+// 只在开关打开时输出，否则关掉开关反而会留下一个没有滚动条的页面。
+const osAttrs = osEnabled ? { 'data-overlayscrollbars-initialize': '' } : {};
+// 滚动条粗细走 CSS 变量（见 styles/scrollbar.css 的 .os-theme-momo），
+// 写成内联变量而不是把数值编进样式表，改配置才能即时生效
+const osStyle = osEnabled ? `--os-momo-size: ${osConfig?.size ?? 8}px` : undefined;
+
+// ---- 照片封面 ----
+// 和 OS 的样式表同一个套路：不能 import 进组件，否则每个页面都会背上这份 CSS，
+// 开关关掉时也省不下来。照片层每个页面都有，所以这个 <link> 也是全站生效。
+const photoCoverOn = photoCoverEnabled();
+---
+
+<!DOCTYPE html>
+<html lang={pageLang} class="h-full" style={osStyle} {...osAttrs}>
+<head>
+    <meta charset="UTF-8">
+    <!-- data-swup-ignore-script：客户端路由（swup）每次换页会把文档里的内联脚本重放一遍，
+         主题初始化只该跑一次（重复执行本身无害，但没必要，也避免以后改动踩坑） -->
+    <script is:inline data-swup-ignore-script>
+        (function() {
+        const savedTheme = localStorage.getItem('theme');
+        const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        let theme;
+        if ( savedTheme === 'system') {
+          theme = systemTheme;
+        } else {
+          theme = savedTheme || 'light';
+        }
+        localStorage.setItem('theme', savedTheme || theme);
+        document.documentElement.setAttribute('data-theme', theme);
+
+        if (theme === 'dark') {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+        })();
+    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content={descriptionText}>
+    {keywords.length > 0 && <meta name="keywords" content={keywords.join(', ')}>}
+    <meta name="author" content={profileConfig.name}>
+    <meta name="robots" content={noindex
+        ? "noindex, follow"
+        : "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"}>
+    <link rel="canonical" href={canonical}>
+    {alternates.map((a) => <link rel="alternate" hreflang={bcp47(a.lang)} href={a.url}>)}
+    <link rel="alternate" hreflang="x-default" href={defaultLocaleUrl(Astro.url.pathname)}>
+
+    <!-- Open Graph -->
+    <meta property="og:type" content={type}>
+    <meta property="og:site_name" content={siteConfig.title}>
+    <meta property="og:title" content={title}>
+    <meta property="og:description" content={descriptionText}>
+    <meta property="og:url" content={canonical}>
+    <meta property="og:locale" content={ogLocale}>
+    {alternateLocales.map((l) => <meta property="og:locale:alternate" content={l}>)}
+    {shareImage && <meta property="og:image" content={shareImage}>}
+    {shareImage && <meta property="og:image:alt" content={title}>}
+    {type === 'article' && publishedIso && <meta property="article:published_time" content={publishedIso}>}
+    {type === 'article' && modifiedIso && <meta property="article:modified_time" content={modifiedIso}>}
+    {type === 'article' && section && <meta property="article:section" content={section}>}
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content={shareImage ? "summary_large_image" : "summary"}>
+    <meta name="twitter:title" content={title}>
+    <meta name="twitter:description" content={descriptionText}>
+    {shareImage && <meta name="twitter:image" content={shareImage}>}
+
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#fbfbfb">
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0a0a0a">
+    <link rel="alternate" type="application/rss+xml" title={getSiteTitle()} href={new URL("rss.xml", Astro.site)} >
+    <link rel="icon" href={siteConfig.favicon} type="image/x-icon">
+
+    <!-- OverlayScrollbars 的样式表：必须阻塞（桥接属性要在首屏前把原生滚动条藏掉） -->
+    {osEnabled && <link rel="stylesheet" href={osCss}>}
+
+    <!-- 照片封面：同样是阻塞样式，首屏的居中标题、蒙版与淡出都靠它，不能等 -->
+    {photoCoverOn && <link rel="stylesheet" href={photoCoverCss}>}
+
+    <link rel="stylesheet" data-swup-theme href={notoSerifSc400} media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href={notoSerifSc400}></noscript>
+    <link rel="stylesheet" data-swup-theme href={notoSerifSc700} media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href={notoSerifSc700}></noscript>
+
+    <!-- 引用块字体（LXGW Bright Medium）：只有渲染正文的页面才需要，同样非阻塞 -->
+    {markdownFont && <link rel="stylesheet" href={lxgwBrightCss} media="print" onload="this.media='all'">}
+    {markdownFont && <noscript><link rel="stylesheet" href={lxgwBrightCss}></noscript>}
+
+    <!-- 第三方域名连接预热：统计域名随时可能用到，评论后端只在文章页预热 -->
+    <link rel="dns-prefetch" href={originOf(umamiScript)}>
+    <link rel="preconnect" href={originOf(umamiScript)} crossorigin>
+    {commentOrigin && <link rel="dns-prefetch" href={commentOrigin}>}
+    {commentOrigin && <link rel="preconnect" href={commentOrigin} crossorigin>}
+
+    <!-- data-swup-ignore-script：umami 的采集脚本只加载一次；
+         换页的 PV 由下面的内联脚本在 astro:page-load 时手动上报 -->
+    <script defer src={umamiScript} data-hash is:inline data-swup-ignore-script></script>
+    <title>{pageTitle}</title>
+    <script type="application/ld+json" set:html={jsonLd}></script>
+    <script is:inline data-swup-ignore-script>
+        // 换页相关的内联脚本合并成一个：减少解析与执行次数（TODO 第 17 项）。
+        // 这里只注册事件监听，可以安全地在 <head> 里提前执行。
+        //
+        // data-swup-ignore-script 是必须的：swup 的 ScriptsPlugin 每次换页都会把文档里
+        // 所有内联脚本重放一遍（带 src 的 module 因模块表去重不会重跑，内联脚本会），
+        // 这个脚本只该执行一次，否则监听器成倍累积。
+        document.addEventListener('astro:before-swap', (e) => {
+            const theme = document.documentElement.getAttribute('data-theme');
+            const sysTheme = document.documentElement.classList.contains('system-theme');
+            // 事件来源有两种：
+            // - ClientRouter（Astro 的 View Transitions）会给 e.newDocument；
+            // - swup 下 <html> 是持久的，没有「新文档」这个概念，此时回退到当前文档。
+            // 主题本来就在 <html> 上、不需要搬运，这里只是为了两种形态都能跑。
+            const target = (e && e.newDocument ? e.newDocument : document).documentElement;
+            if (theme) {
+                target.setAttribute('data-theme', theme);
+            }
+            if (sysTheme) {
+                target.classList.add('system-theme');
+            }
+            // 换页 / 前后退时浏览器会动滚动位置：如果 html 上还留着 scroll-behavior: smooth，
+            // 这些恢复过程会被动画拖慢。这里临时切成 auto，等新页面稳定后再交还给 CSS
+            //（页内锚点仍需要平滑滚动）。
+            document.documentElement.style.scrollBehavior = 'auto';
+            target.style.scrollBehavior = 'auto';
+        });
+
+        // ---- 前进 / 后退的滚动恢复（自己接管）----
+        // swup 的 scroll 插件在 popstate 时不做任何滚动（默认交给浏览器的原生恢复），
+        // 但客户端换页是异步的：浏览器恢复滚动时文档里还是**旧页面**，
+        // 位置会被旧页面的高度截断（实测：从长文后退到短文再回来，位置直接变成 0）。
+        // 所以这里按历史条目自己记一份，换页内容就位后再恢复，并关掉原生恢复避免互相打架。
+        if ('scrollRestoration' in window.history) {
+            window.history.scrollRestoration = 'manual';
+        }
+
+        /** 把当前滚动位置写进当前历史条目（保留 swup 自己的 state 标记） */
+        function rememberScrollPosition() {
+            const state = window.history.state;
+            if (!state || typeof state !== 'object') return;
+            const y = Math.round(window.scrollY);
+            if (state.scrollY === y) return;
+            window.history.replaceState({ ...state, scrollY: y }, '');
+        }
+
+        // 滚动过程中节流写；真正离开当前条目之前（点击链接）再补一次
+        let scrollWriteTimer;
+        window.addEventListener('scroll', () => {
+            clearTimeout(scrollWriteTimer);
+            scrollWriteTimer = setTimeout(rememberScrollPosition, 150);
+        }, { passive: true });
+
+        document.addEventListener('swup:visit:start', (event) => {
+            // popstate 时位置可能已经被浏览器截断，写了反而会污染目标条目的记录
+            if (event.detail && event.detail.visit && event.detail.visit.history.popstate) return;
+            clearTimeout(scrollWriteTimer);
+            rememberScrollPosition();
+        });
+
+        // 待恢复的位置：从 popstate 事件自带的 state 里取（不受截断影响）
+        let pendingScrollY = null;
+        window.addEventListener('popstate', (event) => {
+            const y = event.state && typeof event.state.scrollY === 'number' ? event.state.scrollY : null;
+            pendingScrollY = y;
+        });
+
+        document.addEventListener('astro:after-swap', () => {
+            if (pendingScrollY === null) return;
+            document.documentElement.style.scrollBehavior = 'auto';
+            window.scrollTo(0, pendingScrollY);
+        });
+
+        let loaderTimeout;
+
+        const hideLoadingOverlay = () => {
+            clearTimeout(loaderTimeout);
+            const overlay = document.getElementById('loading-overlay');
+            if (overlay) overlay.style.display = 'none';
+        };
+
+        // 1. 开始准备跳转（swup 没有 astro:before-preparation）
+        document.addEventListener('swup:visit:start', () => {
+            loaderTimeout = setTimeout(() => {
+                const overlay = document.getElementById('loading-overlay');
+                if (overlay) overlay.style.display = 'flex';
+            }, 500);
+        });
+
+        // 2. 页面内容交换完成（DOM 已更新）——@swup/astro 把 content:replace 派发成 astro:after-swap
+        document.addEventListener('astro:after-swap', hideLoadingOverlay);
+
+        // 3. 兜底方案：本次访问收尾（page:view -> astro:page-load）
+        document.addEventListener('astro:page-load', () => {
+            hideLoadingOverlay();
+            // 内容变高后（图片等）再补一次：after-swap 那一刻可能还没到目标位置
+            if (pendingScrollY !== null) {
+                const y = pendingScrollY;
+                pendingScrollY = null;
+                if (Math.abs(window.scrollY - y) > 4) window.scrollTo(0, y);
+            }
+            // 滚动位置恢复完毕，把平滑滚动交还给 CSS（见 before-swap 的说明）。
+            //
+            // ⚠️ 必须晚两帧，不能在这里同步复位：swup 的 ScrollPlugin 是用
+            // requestAnimationFrame 延后执行「回顶部」的，而 astro:page-load 由 page:view
+            // 派发、紧接着 content:scroll 就到了——同一帧里同步复位，插件那次
+            // window.scrollTo(0, 0) 就会带着 CSS 的 scroll-behavior: smooth 执行，
+            // 「瞬时回顶」变成一段几百毫秒的滚动动画（还会跟用户自己的滚动打架）。
+            // 双 rAF：插件先注册、先执行，这里保证它跑完再交还。
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+                document.documentElement.style.scrollBehavior = '';
+            }));
+        });
+
+        // 4. 统计：swup 不会整页刷新，umami 的自动 PV 统计不会触发，这里补一次。
+        //    astro:page-load 只在真实访问时派发（首屏不派发），所以首屏不会重复计数。
+        document.addEventListener('astro:page-load', () => {
+            const url = window.location.pathname + window.location.search;
+            if (window.__momoUmamiUrl === url) return;
+            window.__momoUmamiUrl = url;
+            window.umami?.track?.();
+        });
+    </script>
+</head>
+<body class="h-full bg-[var(--bg-color)]" {...aosBodyAttrs} {...osAttrs}>
+    
+    {osEnabled && <OverlayScrollbars />}
+
+    <div id="loading-overlay" aria-hidden="true">
+      <div class="spinner"></div>
+    </div>
+
+    <slot />
+    
+</body>
+</html>
+
+<style is:global>
+  #loading-overlay {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(255, 255, 255, 0.7);
+    z-index: 9999;
+    /* 这里原本还有 backdrop-filter: blur(2px)：整屏模糊在换页瞬间的合成成本很高，
+       而去掉后观感几乎不变（背景本来就压了一层 70% 的半透明色） */
+    animation: fadeIn 0.3s ease-out;
+  }
+
+  [data-theme="dark"] #loading-overlay {
+    background-color: rgba(0, 0, 0, 0.7);
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid var(--button-hover-color);
+    border-top: 4px solid var(--link-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  /* 页内锚点（脚注、目录）依赖这里的平滑滚动。
+     换页时的滚动由 swup 的 scroll 插件接管（新页面回顶部、前后退交给浏览器恢复），
+     并在 before-swap 里临时切成 auto，不受这里的平滑滚动影响。 */
+  html {
+    scroll-behavior: smooth;
+  }
+</style>
+
+{ siteConfig.theme.AOS &&
+<script>
+  import AOS from 'aos';
+  import 'aos/dist/aos.css';
+  import { registerPageInit } from '@utils/pageInit';
+
+  function initApp() {
+    // AOS 的 init() 每次调用都会往 window 上新增 resize / orientationchange / scroll
+    // 三个监听器且不会去重，换页时反复 init 会成倍累积（这正是滚动越来越卡的主因之一），
+    // 因此整个会话只初始化一次，之后统一用 refreshHard() 更新元素。
+    const state = window.__momoAos || (window.__momoAos = { started: false });
+
+    // 0. 过渡时长以 <body> 上的 data-aos-duration 为准（见 Layout 里 aosBodyAttrs 的说明）。
+    //    客户端跳转换掉 <body> 后，只要 HTML 上带着这个属性就仍然有过渡；
+    //    这里再做一次兜底，保证即使属性被移除也不会退化成「瞬间出现」。
+    const body = document.body;
+    const duration = Number(body.dataset.aosDuration) || 550;
+    if (!body.hasAttribute('data-aos-duration')) {
+      body.setAttribute('data-aos-duration', String(duration));
+      body.setAttribute('data-aos-easing', 'momo');
+      body.setAttribute('data-aos-delay', '0');
+    }
+
+    // 1. 先给正文的动态子元素打上入场标记
+    const container = document.querySelector('.markdown-content');
+    if (container) {
+      const elements = container.querySelectorAll(':scope > *');
+      elements.forEach((el, i) => {
+        el.setAttribute('data-aos', 'fade-up');
+        el.setAttribute('data-aos-delay', (i % 5 * 50).toString());
+      });
+    }
+
+    // 2. 只在首次初始化
+    //    注意：这里必须和上面的打标记处在同一帧。曾经试过用 requestAnimationFrame
+    //    延后一帧以便让「首屏内已经可见的正文」也走一遍上浮，实测那会让这些元素
+    //    先可见、再瞬间变透明、然后淡回来（闪一下），比直接出现更糟，故保持原样。
+    if (!state.started) {
+      state.started = true;
+      AOS.init({
+        duration,
+        once: true,
+      });
+      return;
+    }
+
+    // 3. 换页后 DOM 全是新的：必须用 refreshHard() 重新收集 [data-aos] 元素，
+    //    只调 refresh() 的话 AOS 里的元素列表还是上一页的、新元素永远不会显现。
+    AOS.refreshHard();
+  }
+
+  // 首屏 + 每次换页（swup 下首屏不会有 astro:page-load，见 @utils/pageInit）
+  registerPageInit(initApp);
+</script>
+}
