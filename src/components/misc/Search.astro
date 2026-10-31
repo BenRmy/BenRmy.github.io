@@ -331,7 +331,17 @@ function waitForPagefind(timeout = 8000) {
 
 async function performSearch(query) {
   const searchList = document.getElementById('search-results-list');
-  const pagefind = window.pagefind ?? (await waitForPagefind());
+  // 走全站统一的加载入口：它与顶栏的空闲预取共享同一个 promise，
+  // 不会出现「一边 options 初始化、一边 search」的并发（见 Header.astro 的 ensurePagefind）
+  let pagefind = window.pagefind && !window.pagefindLoading ? window.pagefind : null;
+  if (!pagefind && typeof window.__momoEnsurePagefind === 'function') {
+    try {
+      pagefind = await window.__momoEnsurePagefind();
+    } catch {
+      pagefind = null;
+    }
+  }
+  if (!pagefind) pagefind = await waitForPagefind();
 
   // 索引拿不到（离线、首次加载失败）时给出可见提示：
   // 线上绝不能退回到假数据，否则用户会以为搜到的是真结果

@@ -862,36 +862,46 @@ function pagefindScriptUrl() {
   return document.getElementById('main-header')?.getAttribute('data-pagefind-script') || '/pagefind/pagefind.js';
 }
 
-async function loadAndSearch(options) {
-  const quiet = options?.quiet === true;
+// 全站唯一的索引加载入口：幂等，并且把「同一个 promise」缓存下来。
+//
+// 为什么必须收敛成一个 promise：顶栏的空闲预取、搜索按钮的点击、搜索面板的
+// 首次检索，三处都会在用户刚进站时几乎同时到达。以前各自判断
+// window.pagefind / window.pagefindLoading 就往下走，结果 import + options
+// 与首次 search() 并发，两个 pagefind init 抢同一个 worker，
+// search 的 promise 永不 resolve——面板一直停在「输入关键词开始搜索」。
+function ensurePagefind() {
+  if (window.__momoPagefindPromise) return window.__momoPagefindPromise;
 
-  // 1. 如果已经加载过了，直接返回
-  if (window.pagefind && typeof window.pagefind.search === 'function') {
-    return;
-  }
-  
-  if (window.pagefindLoading) return;
-  window.pagefindLoading = true;
-
-  try {
-    // 动态导入脚本
+  window.__momoPagefindPromise = (async () => {
     const pagefind = await import(pagefindScriptUrl());
     await pagefind.options({ excerptLength: 20 });
-    // 显式把索引初始化跑完再交给搜索面板：options() 只记配置，
-    // 真正的 init 要到第一次 search() 才发生。若不在这里 await，
-    // 用户点开搜索立刻输入时，search() 会和 options() 里的初始化并发，
-    // 两个 init 抢同一个 worker，promise 永远不 resolve（表现为搜不出东西）。
+    // options() 只记配置，真正的 init 要到第一次 search() 才发生。
+    // 这里显式跑完，消费者拿到的实例一定是就绪的。
     await pagefind.init?.();
     window.pagefind = pagefind;
-    
-    // 触发自定义事件，通知搜索组件：Pagefind 准备好了
+    // 通知搜索组件：Pagefind 准备好了（老监听者仍有效）
     document.dispatchEvent(new CustomEvent('pagefind-ready'));
+    return pagefind;
+  })().catch((error) => {
+    // 失败就不缓存，下一次交互还能重试，否则整个会话都搜不了
+    window.__momoPagefindPromise = null;
+    throw error;
+  });
+
+  return window.__momoPagefindPromise;
+}
+
+// 暴露给搜索面板（Search.astro 的内联脚本）复用同一次初始化
+window.__momoEnsurePagefind = ensurePagefind;
+
+async function loadAndSearch(options) {
+  const quiet = options?.quiet === true;
+  try {
+    await ensurePagefind();
   } catch (error) {
     // 预取失败不打扰用户：真正的点击还会再试一次，并给出可见提示
     if (quiet) console.info('Pagefind 索引预取失败（不影响页面其它功能）:', error?.message ?? error);
     else console.error('Pagefind 加载失败:', error);
-  } finally {
-    window.pagefindLoading = false;
   }
 }
 
