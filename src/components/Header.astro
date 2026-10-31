@@ -877,6 +877,11 @@ async function loadAndSearch(options) {
     // 动态导入脚本
     const pagefind = await import(pagefindScriptUrl());
     await pagefind.options({ excerptLength: 20 });
+    // 显式把索引初始化跑完再交给搜索面板：options() 只记配置，
+    // 真正的 init 要到第一次 search() 才发生。若不在这里 await，
+    // 用户点开搜索立刻输入时，search() 会和 options() 里的初始化并发，
+    // 两个 init 抢同一个 worker，promise 永远不 resolve（表现为搜不出东西）。
+    await pagefind.init?.();
     window.pagefind = pagefind;
     
     // 触发自定义事件，通知搜索组件：Pagefind 准备好了
