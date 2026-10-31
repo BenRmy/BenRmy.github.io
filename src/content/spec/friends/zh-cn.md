@@ -9,6 +9,6 @@
     name: 'BenRmy',
     avatar: 'https://benrmy.github.io/avatar.jpg',
     url: 'https://benrmy.github.io',
-    description: '写工程笔记的地方'
+    description: '记录技术与生活'
 }
 ```

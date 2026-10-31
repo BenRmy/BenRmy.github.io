@@ -38,7 +38,7 @@ export const siteConfig: SiteConfig = {
             imageMode: "top" // Cover image mode for article cards: "top" shows the image above the content; "background" uses the image as the card background, fading to transparent from right to left
         },
         photoCover: {
-            enable: true, // Whether to use a full-screen photo as the background of the home page; the title and subtitle are centered, and everything smoothly returns to the normal style as you scroll down
+            enable: false, // Whether to use a full-screen photo as the background of the home page; the title and subtitle are centered, and everything smoothly returns to the normal style as you scroll down
             image: "/cover.jpg", // Photo path: relative to the /public directory if it starts with '/', otherwise relative to the /src directory (e.g. assets/cover.jpg). The blurred placeholder is generated at build time, so there is no small image to prepare by hand
             mask: 0.5 // Opacity (0 - 1) of the black mask over the photo, fading away as you scroll down
         },
@@ -59,7 +59,7 @@ export const profileConfig: ProfileConfig = {
     name: "BenRmy", // Used in the footer of the blog
     description: "爬虫逆向 / 数据工程 / AI 应用开发", // Used in SEO
     indexPage: "https://benrmy.github.io", // The homepage, used in footer and SEO
-    startYear: 2026, // The year the site was created, used in the footer
+    startYear: 2018, // The year the site was created, used in the footer
 }
 
 export const licenseConfig: LicenseConfig = {
