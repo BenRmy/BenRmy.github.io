@@ -37,6 +37,7 @@ export interface Translation {
     }
     search: {
         placeholder: string;
+        loading: string;
         noresult: string;
         error: string;
     };

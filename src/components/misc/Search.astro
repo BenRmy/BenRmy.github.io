@@ -19,6 +19,7 @@ const translationsByLocale = Object.fromEntries(
       code,
       {
         placeholder: tr("search.placeholder"),
+        loading: tr("search.loading"),
         error: tr("search.error"),
         noresult: tr("search.noresult"),
       },
@@ -331,6 +332,16 @@ function waitForPagefind(timeout = 8000) {
 
 async function performSearch(query) {
   const searchList = document.getElementById('search-results-list');
+  // 先给个「在加载」的回执：首次检索要拉 wasm 与索引分片，几秒内没有反馈
+  // 会让人以为搜索坏了
+  if (searchList) {
+    searchList.innerHTML = `
+      <div class="p-8 text-center text-[var(--text-color-70)]">
+        <p>${tr().loading}</p>
+      </div>
+    `;
+  }
+
   // 走全站统一的加载入口：它与顶栏的空闲预取共享同一个 promise，
   // 不会出现「一边 options 初始化、一边 search」的并发（见 Header.astro 的 ensurePagefind）
   let pagefind = window.pagefind && !window.pagefindLoading ? window.pagefind : null;

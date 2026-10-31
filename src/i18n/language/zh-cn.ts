@@ -27,6 +27,7 @@ const translation: Translation = {
     },
     search: {
         placeholder: "输入关键词开始搜索",
+        loading: "正在加载搜索索引…",
         noresult: "未找到相关结果",
         error: "搜索出现错误，请稍后重试"
     },

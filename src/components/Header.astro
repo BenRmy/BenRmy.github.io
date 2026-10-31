@@ -875,9 +875,9 @@ function ensurePagefind() {
   window.__momoPagefindPromise = (async () => {
     const pagefind = await import(pagefindScriptUrl());
     await pagefind.options({ excerptLength: 20 });
-    // options() 只记配置，真正的 init 要到第一次 search() 才发生。
-    // 这里显式跑完，消费者拿到的实例一定是就绪的。
-    await pagefind.init?.();
+    // ⚠️ 不要在这里 await pagefind.init()：init 会一次性把整份索引和 wasm 全拉下来，
+    // 实测让「实例就绪」这一步从 0.2 秒变成 11 秒。交给第一次 search() 按需加载即可，
+    // 并发问题已经由下面这条串行队列解决。
 
     // 同一个实例上的 search 不能并发：pagefind 在内部共享 worker 状态，
     // 并发调用会让后来的 promise 永远不 resolve。搜索面板的防抖检索与
