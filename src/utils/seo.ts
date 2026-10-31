@@ -6,7 +6,15 @@
  */
 import { getImage } from 'astro:assets'
 import { i18n } from 'astro:config/client'
-import { profileConfig, siteConfig } from '@/config'
+import { profileConfig, siteConfig, i18nConfig } from '@/config'
+
+/** 默认语言：astro 的 i18n 在类型上可选，运行期由 astro.config.mjs 提供 */
+const defaultLocale = i18n?.defaultLocale ?? i18nConfig.defaultLanguage
+/**
+ * 默认语言是否带语言前缀。
+ * routing 为 'manual' 时由业务自行路由，这里按“默认语言不加前缀”处理。
+ */
+const prefixDefaultLocale = typeof i18n?.routing === 'object' ? i18n.routing.prefixDefaultLocale : false
 
 /**
  * 内容目录里的图片：构建期取出优化后的 URL 作为分享图。
@@ -61,9 +69,9 @@ export function stripLocale(pathname: string): string {
     const base = (import.meta.env.BASE_URL || '/').replace(/\/+$/, '')
     if (base && p.startsWith(`${base}/`)) p = p.slice(base.length)
 
-    const prefixDefault = !!i18n?.routing?.prefixDefaultLocale
+    const prefixDefault = prefixDefaultLocale
     const segment = p.replace(/^\/+/, '').split('/')[0]
-    if (segment && localeCodes().includes(segment) && (segment !== i18n.defaultLocale || prefixDefault)) {
+    if (segment && localeCodes().includes(segment) && (segment !== defaultLocale || prefixDefault)) {
         p = `/${p.replace(/^\/+/, '').split('/').slice(1).join('/')}`
     }
     return p.startsWith('/') ? p : `/${p}`
@@ -72,19 +80,19 @@ export function stripLocale(pathname: string): string {
 /** 同一页面在各语言下的 URL（hreflang 用） */
 export function localeAlternates(pathname: string): { lang: string; url: string }[] {
     const rest = stripLocale(pathname)
-    const prefixDefault = !!i18n?.routing?.prefixDefaultLocale
+    const prefixDefault = prefixDefaultLocale
     const codes = localeCodes()
-    return (codes.length ? codes : [i18n.defaultLocale]).map((code) => ({
+    return (codes.length ? codes : [defaultLocale]).map((code) => ({
         lang: code,
-        url: absoluteUrl(code === i18n.defaultLocale && !prefixDefault ? rest : `/${code}${rest}`),
+        url: absoluteUrl(code === defaultLocale && !prefixDefault ? rest : `/${code}${rest}`),
     }))
 }
 
 /** x-default 指向默认语言版本 */
 export function defaultLocaleUrl(pathname: string): string {
     const rest = stripLocale(pathname)
-    const prefixDefault = !!i18n?.routing?.prefixDefaultLocale
-    return absoluteUrl(prefixDefault ? `/${i18n.defaultLocale}${rest}` : rest)
+    const prefixDefault = prefixDefaultLocale
+    return absoluteUrl(prefixDefault ? `/${defaultLocale}${rest}` : rest)
 }
 
 /** 压缩空白并截断过长的文本（meta description 建议 150-160 字符） */
@@ -120,7 +128,7 @@ export function websiteJsonLd(lang?: string): Record<string, unknown> {
         ...(siteConfig.subTitle ? { alternateName: siteConfig.subTitle } : {}),
         url: absoluteUrl('/'),
         description: profileConfig.description || '',
-        inLanguage: bcp47(lang || i18n.defaultLocale),
+        inLanguage: bcp47(lang || defaultLocale),
         author: owner,
         publisher: owner,
     }

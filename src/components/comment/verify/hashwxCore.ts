@@ -43,7 +43,7 @@ interface HashwxExports {
 }
 
 /** base64 → 字节；浏览器用 atob，Node（测试/构建期）退回 Buffer */
-function decodeBase64(base64: string): Uint8Array {
+function decodeBase64(base64: string): Uint8Array<ArrayBuffer> {
 	if (typeof atob === 'function') {
 		const binary = atob(base64);
 		const out = new Uint8Array(binary.length);

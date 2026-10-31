@@ -17,8 +17,8 @@ import { findShortcodes } from './owo';
 const SKIP_TAGS = new Set(['CODE', 'PRE', 'SCRIPT', 'STYLE', 'TEXTAREA']);
 
 export interface EmojifyOptions {
-	/** 短代码 → 图片地址 */
-	images?: Map<string, string>;
+	/** 短代码 → 图片地址；`null` 表示表情包尚未加载 */
+	images?: Map<string, string> | null;
 	/**
 	 * 触发重新水合的键（通常传被渲染的 HTML 原文）。
 	 * `{@html}` 更新会整体替换 innerHTML，把 html 一起作为 action 参数
@@ -99,7 +99,7 @@ function refreshHydratedImages(root: HTMLElement, images: Map<string, string>): 
  * 就地水合一个容器内的所有文本节点。
  * 幂等：已替换过的位置不再有 `:name:` 文本，重复调用不会重复插图片。
  */
-export function hydrateEmojis(root: HTMLElement, images?: Map<string, string>): number {
+export function hydrateEmojis(root: HTMLElement, images?: Map<string, string> | null): number {
 	if (!root || !images || images.size === 0) return 0;
 	const doc = root.ownerDocument;
 	if (!doc) return 0;

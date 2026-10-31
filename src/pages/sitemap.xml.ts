@@ -6,7 +6,7 @@
  */
 import type { APIContext } from 'astro';
 import { i18n } from 'astro:config/client';
-import { siteConfig } from '@/config';
+import { i18nConfig, siteConfig } from '@/config';
 import { getBlogEntrySort } from '@utils/contentUtils';
 import { absoluteUrl, bcp47, normalizePath } from '@utils/seo';
 import { getRelativeLocaleUrl } from '@utils/urlUtils';
@@ -32,10 +32,10 @@ function isoDate(value: Date | string | undefined): string {
 }
 
 export async function GET(_context: APIContext) {
-  const locales = (i18n?.locales || [i18n?.defaultLocale]).map((l) =>
+  const locales = (i18n?.locales || [i18n?.defaultLocale ?? i18nConfig.defaultLanguage]).map((l) =>
     typeof l === 'string' ? l : l.path,
   );
-  const defaultLocale = i18n.defaultLocale;
+  const defaultLocale = i18n?.defaultLocale ?? i18nConfig.defaultLanguage;
   const entries = new Map<string, Entry>();
 
   const push = (rest: string, lastmod?: string) => {

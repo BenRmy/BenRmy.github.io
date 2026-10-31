@@ -5,7 +5,7 @@ import { getSiteTitle } from "../utils/siteTitle";
 import type { APIContext } from "astro";
 
 export async function GET(context: APIContext) {
-    const blog = await getBlogEntrySort();
+    const blog = await getBlogEntrySort(i18nConfig.defaultLanguage);
     return rss({
         title: getSiteTitle(),
         description: profileConfig.description,

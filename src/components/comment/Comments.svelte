@@ -639,7 +639,7 @@
       <div class="space-y-6">
         {#each comments as c}
           <div in:fly={{ y: 24, duration: 400, opacity: 0 }}>
-            <CommentItem {c} {postSlug} {author} {email} {url} {language} {apiUrl}
+            <CommentItem {c} {postSlug} {author} {email} {url} {language}
               {bloggerBadgeEnabled} {bloggerBadgeText} {adminCommentKeyConfigured} {adminEmailHashes}
               emojiImages={emojiImages} {emojiCdnUrls} {emojiEnabled}
               on:emojiSetChange={(e) => (emojiSet = e.detail)}
