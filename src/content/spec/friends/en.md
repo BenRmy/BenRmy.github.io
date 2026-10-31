@@ -1,14 +1,14 @@
-### Add a Link Exchange
+### Friends
 
-If we view the internet as the sky, blogs are the stars scattered across it. Link exchanges are the pathways through this vast sea of stars, connecting each one so they're no longer isolated islands. If you'd like to join this stellar network, feel free to send an [email](mailto:me@motues.top) so we can get to know each other.
+No link exchange yet. If you'd like to swap links, open an issue on [GitHub](https://github.com/BenRmy).
 
-### Link Exchange Format
+### This site
 
-```ts
+```typescript
 {
-    name: 'Motues',
-    avatar: 'https://www.motues.top/avatar.jpg',
-    url: 'https://www.motues.top',
-    description: 'Like River!'
+    name: 'BenRmy',
+    avatar: 'https://benrmy.github.io/avatar.jpg',
+    url: 'https://benrmy.github.io',
+    description: 'Engineering notes'
 }
 ```

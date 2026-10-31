@@ -23,8 +23,8 @@ export const siteConfig: SiteConfig = {
     },
     comments: {
         enable: false, // Whether to enable comments
-        platform: "default", // Comment platform, set "default" to use Momo-backend, also supports "twikoo"
-        backendUrl: "https://api-momo.motues.top" // Backend URL for comments
+        platform: "default", // Comment platform, set "default" to use the template's backend, also supports "twikoo"
+        backendUrl: "" // Backend URL for comments; fill in your own instance before enabling
     },
     theme: {
         AOS: true, // Whether to enable AOS (Animate On Scroll) for animations

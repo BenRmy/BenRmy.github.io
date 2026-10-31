@@ -1,14 +1,14 @@
-### 添加友链
+### 友链
 
-如果把互联网看成天空，博客是天上的每一颗星星。友链就是茫茫星海中的道路，让每颗星星不再是孤岛。如果你也想加入这个星海，不妨发个[邮件](mailto:me@motues.top)，让彼此了解一下。
+目前还没开始收友链。想交换的话，到 [GitHub](https://github.com/BenRmy) 上开个 issue 或直接找我聊。
 
-### 友链格式
+### 本站信息
 
 ```typescript
 {
-    name: 'Motues',
-    avatar: 'https://www.motues.top/avatar.jpg',
-    url: 'https://www.motues.top',
-    description: 'Like River!'
+    name: 'BenRmy',
+    avatar: 'https://benrmy.github.io/avatar.jpg',
+    url: 'https://benrmy.github.io',
+    description: '写工程笔记的地方'
 }
 ```

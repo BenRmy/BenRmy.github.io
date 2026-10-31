@@ -39,10 +39,10 @@ const ecSettings = siteConfig.expressiveCode ?? {};
 const ecEnabled = ecSettings.enable !== false;
 const collageSettings = siteConfig.theme?.imageCollage ?? {};
 
-// GitHub Pages 项目页把站点挂在子路径下（https://<user>.github.io/<repo>/），
-// 所有站内绝对路径（链接、public 资源、搜索索引）都必须带上这个前缀。
-// 本地跑根路径：SITE_BASE=/ pnpm dev
-const BASE_PATH = process.env.SITE_BASE ?? '/blog/';
+// 站点部署在用户站（https://benrmy.github.io/），跑在域名根下，base 为空。
+// 代码里所有链接仍然统一走 withBase()/getRelativeLocaleUrl()，换到子路径部署时
+// 只需 SITE_BASE=/repo/ pnpm build，不用再改一遍源码。
+const BASE_PATH = process.env.SITE_BASE ?? '/';
 
 // https://astro.build/config
 export default defineConfig({
