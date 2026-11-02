@@ -1,11 +1,11 @@
 ---
 title: 重新开张
-pubDate: 2026-10-31
+pubDate: 2018-08-08
 description: 站点换了一套引擎重建，模板自带的示例文章一并清空，从这里重新开始。
 category: 随笔
 image: ""
 draft: false
-slugId: benrmy/hello
+slugId: hello
 ---
 
 # 重新开张
@@ -17,7 +17,7 @@ slugId: benrmy/hello
 - **Astro** 打底，静态构建，整站输出纯 HTML
 - **Swup** 做页面切换，不整页刷新
 - **pagefind** 做站内搜索，索引在构建期生成，没有后端
-- 部署在 **GitHub Pages**，跑在用户站根路径 `https://benrmy.github.io/`，推 `main` 就自动上线
+- 部署在 **GitHub Pages**，跑在用户站根路径 `https://benrmy.github.io/`
 - 中英双语，靠 Astro 的 i18n 路由前缀区分，默认语言不带前缀
 
 选静态站的原因很简单：没有需要保活的服务，没有要打补丁的数据库，写 Markdown 就够了。代价是搜索、评论这类"需要服务端"的功能得换思路——搜索用构建期索引解决，评论暂时关着。
