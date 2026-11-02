@@ -1,6 +1,6 @@
 ---
 title: Scrapy 爬虫框架介绍
-pubDate: 2018-09-03
+pubDate: 2018-09-06
 description: 五个组件的分工，从 Spider 到 Pipeline 的骨架，还有那些第一遍跑就会踩的坑。
 category: 编程技术
 image: ""
