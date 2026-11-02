@@ -1,6 +1,6 @@
 ---
 title: python高级教程
-pubDate: 2018-09-02
+pubDate: 2018-09-03
 description: 属性访问、动态能力、迭代协议、模块包和异常的组织方式。
 category: 编程语言
 image: ""

@@ -1,6 +1,6 @@
 ---
 title: python初级教程
-pubDate: 2018-09-02
+pubDate: 2018-09-01
 description: 学 Python 最容易走偏的地方，是把它当 C 或 Java 来学。
 category: 编程语言
 image: ""
