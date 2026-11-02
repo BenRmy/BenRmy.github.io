@@ -61,7 +61,9 @@ export async function getBlogEntrySort(
   const defaultLanguage = i18n?.defaultLocale ?? i18nConfig.defaultLanguage;
 
   for (const post of blogEntries) {
-    const { id, language } = parseEntryId(post.id, defaultLanguage);
+    const { id: pathId, language } = parseEntryId(post.id, defaultLanguage);
+    // URL 优先取 frontmatter 的 slugId；没有该元数据时才回退到文件路径算出的 id
+    const id = post.data.slugId ?? pathId;
 
     if (!grouped.has(id)) {
       grouped.set(id, {});
